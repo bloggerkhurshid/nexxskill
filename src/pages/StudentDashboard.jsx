@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, User, CheckCircle, Video, Calendar, ExternalLink, FileText, Download, Printer, Image as ImageIcon, ShieldCheck, Trash2 } from 'lucide-react';
+import { BookOpen, User, CheckCircle, Video, Calendar, ExternalLink, FileText, Download, Printer, Image as ImageIcon, ShieldCheck, Trash2, Maximize } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 
 export const StudentDashboard = () => {
@@ -614,8 +614,9 @@ export const StudentDashboard = () => {
             <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto flex-1 text-slate-200">
               {/* Video Player */}
               <div className="lg:col-span-8 space-y-3">
-                <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-slate-800">
+                <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-slate-800 group">
                   <video
+                    id="course-video-player"
                     key={activeVideoIndex}
                     src={(Array.isArray(selectedVideoModal.course_videos) && selectedVideoModal.course_videos.length > 0)
                       ? selectedVideoModal.course_videos[activeVideoIndex]?.url
@@ -628,6 +629,27 @@ export const StudentDashboard = () => {
                     autoPlay
                     className="w-full h-full object-contain"
                   />
+
+                  {/* Custom Fullscreen Overlay Button */}
+                  <button
+                    onClick={() => {
+                      const videoEl = document.getElementById('course-video-player');
+                      if (videoEl) {
+                        if (videoEl.requestFullscreen) {
+                          videoEl.requestFullscreen();
+                        } else if (videoEl.webkitRequestFullscreen) {
+                          videoEl.webkitRequestFullscreen();
+                        } else if (videoEl.msRequestFullscreen) {
+                          videoEl.msRequestFullscreen();
+                        }
+                      }
+                    }}
+                    title="Toggle Fullscreen"
+                    className="absolute top-3 right-3 bg-slate-900/80 hover:bg-blue-600 text-white p-2 rounded-xl border border-slate-700/80 backdrop-blur-md transition-all opacity-80 hover:opacity-100 cursor-pointer shadow-lg flex items-center gap-1.5 text-xs font-bold"
+                  >
+                    <Maximize className="w-4 h-4" />
+                    <span className="hidden sm:inline">Fullscreen</span>
+                  </button>
                 </div>
 
                 <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1">
