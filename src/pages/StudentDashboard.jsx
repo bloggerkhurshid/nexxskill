@@ -458,41 +458,43 @@ export const StudentDashboard = () => {
               </div>
             </div>
 
-            <div className="p-6 sm:p-8 space-y-5 overflow-y-auto flex-1 text-slate-800 text-xs print:p-0 print:space-y-4">
+            <div className="p-4 sm:p-8 space-y-4 sm:space-y-5 overflow-y-auto flex-1 text-slate-800 text-xs print:p-0 print:space-y-4">
               {/* Invoice Header */}
-              <div className="flex justify-between items-start border-b border-slate-200 pb-5 print:pb-4 break-inside-avoid">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 border-b border-slate-200 pb-4 sm:pb-5 print:pb-4 break-inside-avoid">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <img src="/assets/logo.png" alt="NexxSkill Logo" className="w-8 h-8 rounded" />
                     <span className="text-xl font-extrabold text-slate-900 font-space">Nexx<span className="text-blue-600">Skill</span></span>
                   </div>
-                  <p className="text-slate-500 text-[11px] pt-1">Enterprise Engineering Academy</p>
+                  <p className="text-slate-500 text-[11px] pt-0.5">Enterprise Engineering Academy</p>
                   <p className="text-slate-400 text-[10px]">support@nexxskill.com • www.nexxskill.com</p>
                 </div>
 
-                <div className="text-right space-y-1">
+                <div className="text-left sm:text-right space-y-1 w-full sm:w-auto flex flex-row sm:flex-col justify-between items-center sm:items-end border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
                   <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
                     Invoice Paid
                   </span>
-                  <p className="text-xs font-mono font-bold text-slate-700 pt-2">INV-2026-{(selectedInvoice.id + 1000)}</p>
-                  <p className="text-[10px] text-slate-400">Issued Date: {new Date(selectedInvoice.created_at).toLocaleDateString()}</p>
+                  <div className="text-right sm:text-right">
+                    <p className="text-xs font-mono font-bold text-slate-700 sm:pt-2">INV-2026-{(selectedInvoice.id + 1000)}</p>
+                    <p className="text-[10px] text-slate-400">Issued Date: {new Date(selectedInvoice.created_at).toLocaleDateString()}</p>
+                  </div>
                 </div>
               </div>
 
               {/* Billed To & Platform Info */}
-              <div className="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 break-inside-avoid">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-100 break-inside-avoid">
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Billed Student</span>
                   <p className="font-bold text-slate-900 text-sm">{profile?.name || user?.name}</p>
-                  <p className="text-slate-500">{profile?.email || user?.email}</p>
+                  <p className="text-slate-500 break-all">{profile?.email || user?.email}</p>
                   <p className="text-slate-500">{profile?.phone || 'Phone verified'}</p>
                 </div>
 
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Payment Reference</span>
-                  <p className="font-semibold text-slate-700 font-mono">Order ID: {selectedInvoice.razorpay_order_id}</p>
-                  <p className="font-semibold text-slate-700 font-mono">Payment Ref: {selectedInvoice.razorpay_payment_id || 'FREE_COUPON_REDEEMED'}</p>
-                  <p className="text-emerald-600 font-semibold flex items-center gap-1 mt-1">
+                  <p className="font-semibold text-slate-700 font-mono text-[11px] break-all">Order ID: {selectedInvoice.razorpay_order_id}</p>
+                  <p className="font-semibold text-slate-700 font-mono text-[11px] break-all">Payment Ref: {selectedInvoice.razorpay_payment_id || 'FREE_COUPON_REDEEMED'}</p>
+                  <p className="text-emerald-600 font-semibold flex items-center gap-1 mt-1 text-[11px]">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Verified Transaction</span>
                   </p>
@@ -500,30 +502,30 @@ export const StudentDashboard = () => {
               </div>
 
               {/* Itemized Table */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden break-inside-avoid">
-                <table className="w-full text-left">
+              <div className="border border-slate-200 rounded-xl overflow-x-auto break-inside-avoid">
+                <table className="w-full text-left min-w-[280px]">
                   <thead className="bg-slate-100 text-slate-600 uppercase text-[10px] font-bold">
                     <tr>
-                      <th className="p-3">Course Description</th>
-                      <th className="p-3 text-right">Fee Rate</th>
+                      <th className="p-2.5 sm:p-3">Course Description</th>
+                      <th className="p-2.5 sm:p-3 text-right">Fee Rate</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     <tr>
-                      <td className="p-3 font-bold text-slate-900">
-                        <div className="flex items-center gap-2">
-                          <span>{selectedInvoice.course_title}</span>
+                      <td className="p-2.5 sm:p-3 font-bold text-slate-900">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          <span className="text-xs sm:text-sm">{selectedInvoice.course_title}</span>
                           {selectedInvoice.coupon_code && (
-                            <span className="font-mono bg-purple-100 text-purple-700 border border-purple-200 px-2 py-0.5 rounded text-[10px] uppercase">
+                            <span className="font-mono bg-purple-100 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] uppercase">
                               COUPON: {selectedInvoice.coupon_code}
                             </span>
                           )}
                         </div>
-                        <span className="block font-normal text-slate-500 text-[11px] mt-0.5">
+                        <span className="block font-normal text-slate-500 text-[10px] sm:text-[11px] mt-0.5">
                           Duration: {selectedInvoice.course_duration} • Enterprise Technical Cohort
                         </span>
                       </td>
-                      <td className="p-3 text-right font-bold text-slate-900">
+                      <td className="p-2.5 sm:p-3 text-right font-bold text-slate-900 whitespace-nowrap text-xs sm:text-sm">
                         ₹{((selectedInvoice.amount_rupees || 0) + (selectedInvoice.discount_rupees || 0)).toLocaleString()}
                       </td>
                     </tr>
@@ -533,22 +535,22 @@ export const StudentDashboard = () => {
 
               {/* Summary Breakdown */}
               <div className="flex justify-end pt-1 break-inside-avoid">
-                <div className="w-72 space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-500">
+                <div className="w-full sm:w-72 space-y-1.5 text-xs bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-xl sm:rounded-none border sm:border-none border-slate-100">
+                  <div className="flex justify-between text-slate-500 text-[11px] sm:text-xs">
                     <span>Standard Tuition Fee:</span>
                     <span>₹{((selectedInvoice.amount_rupees || 0) + (selectedInvoice.discount_rupees || 0)).toLocaleString()}</span>
                   </div>
                   {selectedInvoice.coupon_code && (
-                    <div className="flex justify-between font-bold text-purple-700">
+                    <div className="flex justify-between font-bold text-purple-700 text-[11px] sm:text-xs">
                       <span>Coupon Discount ({selectedInvoice.coupon_code}):</span>
                       <span>- ₹{(selectedInvoice.discount_rupees || 0).toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-slate-500">
+                  <div className="flex justify-between text-slate-500 text-[11px] sm:text-xs">
                     <span>GST (0% Zero-Rated):</span>
                     <span>₹0.00</span>
                   </div>
-                  <div className="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200 font-space">
+                  <div className="flex justify-between text-sm sm:text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200 font-space">
                     <span>Total Amount Paid:</span>
                     <span className="text-blue-600">₹{(selectedInvoice.amount_rupees || 0).toLocaleString()}</span>
                   </div>
@@ -556,7 +558,7 @@ export const StudentDashboard = () => {
               </div>
 
               {/* Footer Note */}
-              <div className="pt-4 border-t border-slate-200 text-center space-y-1 text-[11px] text-slate-400 break-inside-avoid">
+              <div className="pt-3 sm:pt-4 border-t border-slate-200 text-center space-y-0.5 text-[10px] sm:text-[11px] text-slate-400 break-inside-avoid">
                 <p className="font-bold text-slate-600">Thank you for learning with NexxSkill Academy!</p>
                 <p>This is a computer-generated tax receipt and invoice statement for online course access.</p>
               </div>
