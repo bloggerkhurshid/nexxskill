@@ -1,0 +1,440 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useAuthModal } from '../context/AuthModalContext';
+import { useRazorpay } from '../hooks/useRazorpay';
+import { Star, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { PageHeader } from '../components/PageHeader';
+import { NoticeModal } from '../components/NoticeModal';
+
+export const Courses = () => {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [purchasingCourseId, setPurchasingCourseId] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
+  const navigate = useNavigate();
+  const razorpayLoaded = useRazorpay();
+  const [searchParams] = useSearchParams();
+  const searchFilter = searchParams.get('search') || '';
+
+  const [checkoutCourse, setCheckoutCourse] = useState(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponStatus, setCouponStatus] = useState(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [paymentStatusAlert, setPaymentStatusAlert] = useState(null);
+
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
+
+  useEffect(() => {
+    document.title = 'Available Courses & Training Cohorts | NexxSkill';
+    fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserEnrollments();
+    } else {
+      setEnrolledCourseIds([]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (checkoutCourse) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [checkoutCourse]);
+
+  const [userEnrollments, setUserEnrollments] = useState({});
+
+  useEffect(() => {
+    if (user) {
+      fetchUserEnrollments();
+    } else {
+      setUserEnrollments({});
+    }
+  }, [user]);
+
+  const fetchUserEnrollments = async () => {
+    try {
+      const res = await api.get('/student/enrollments');
+      if (res.data?.success) {
+        const enrMap = {};
+        (res.data.data.enrollments || []).forEach(e => {
+          enrMap[Number(e.course_id)] = e;
+        });
+        setUserEnrollments(enrMap);
+      }
+    } catch (err) {
+      console.error('Failed to fetch user enrollments:', err);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const res = await api.get('/courses');
+      if (res.data?.success) {
+        // Filter out upcoming courses completely per request
+        const availableOnly = (res.data.data.courses || []).filter(c => c.type === 'available');
+        setCourses(availableOnly);
+
+        const checkoutId = searchParams.get('checkout');
+        if (checkoutId) {
+          const matched = availableOnly.find(c => Number(c.id) === Number(checkoutId));
+          if (matched) {
+            handleOpenCheckoutModal(matched);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch courses:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenCheckoutModal = (course) => {
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+    setCheckoutCourse(course);
+    setCouponCode('');
+    setCouponStatus(null);
+    setAppliedCoupon(null);
+    setErrorMsg('');
+  };
+
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault();
+    if (!couponCode.trim() || !checkoutCourse) return;
+
+    setValidatingCoupon(true);
+    setCouponStatus(null);
+
+    try {
+      const res = await api.post('/coupons/validate', {
+        code: couponCode,
+        courseId: checkoutCourse.id
+      });
+
+      if (res.data?.success) {
+        setAppliedCoupon(res.data.data);
+        setCouponStatus({ type: 'success', message: res.data.message });
+      }
+    } catch (err) {
+      setAppliedCoupon(null);
+      setCouponStatus({ type: 'error', message: err.response?.data?.error?.message || 'Invalid coupon code' });
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const [noticeModal, setNoticeModal] = useState(null);
+
+  const handleProceedPayment = async () => {
+    if (!checkoutCourse) return;
+    if (!razorpayLoaded && !appliedCoupon?.isFree) {
+      setNoticeModal({ type: 'info', title: 'SDK Loading', message: 'Payment SDK is loading, please try again in a moment.' });
+      return;
+    }
+
+    setPurchasingCourseId(checkoutCourse.id);
+    setErrorMsg('');
+
+    try {
+      const orderRes = await api.post('/payments/create-order', {
+        courseId: checkoutCourse.id,
+        couponCode: appliedCoupon ? appliedCoupon.code : ''
+      });
+
+      if (!orderRes.data?.success) {
+        throw new Error(orderRes.data?.error?.message || 'Failed to create payment order');
+      }
+
+      // Handle 100% Discount (Free Checkout Direct Activation)
+      if (orderRes.data.isFree) {
+        setCheckoutCourse(null);
+        setNoticeModal({
+          type: 'success',
+          title: 'Course Unlocked!',
+          message: orderRes.data.message || 'Course unlocked with 100% discount!',
+          onClose: () => navigate('/student/dashboard')
+        });
+        return;
+      }
+
+      const { orderId, amount, currency, keyId, courseTitle } = orderRes.data.data;
+
+      const options = {
+        key: keyId,
+        amount: amount,
+        currency: currency,
+        name: 'NexxSkill Academy',
+        description: courseTitle,
+        ...(orderId && !orderId.startsWith('order_demo_') ? { order_id: orderId } : {}),
+        prefill: {
+          name: user.name || '',
+          email: user.email || '',
+          contact: user.phone || ''
+        },
+        theme: {
+          color: '#1e3a8a'
+        },
+        handler: async (response) => {
+          document.body.style.overflow = '';
+          try {
+            const verifyRes = await api.post('/payments/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            });
+
+            if (verifyRes.data?.success) {
+              setCheckoutCourse(null);
+              setNoticeModal({
+                type: 'success',
+                title: 'Payment Successful',
+                message: 'Enrollment successful! Your course access has been activated.',
+                onClose: () => navigate('/student/dashboard')
+              });
+            } else {
+              setNoticeModal({ type: 'error', title: 'Payment Verification Failed', message: 'Payment verification failed. Please contact support.' });
+            }
+          } catch (vErr) {
+            setNoticeModal({ type: 'error', title: 'Payment Verification Error', message: vErr.response?.data?.error?.message || 'Payment verification failed.' });
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            document.body.style.overflow = '';
+            setPurchasingCourseId(null);
+            setNoticeModal({ type: 'info', title: 'Payment Cancelled', message: 'Payment process was cancelled by user.' });
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        document.body.style.overflow = '';
+        setNoticeModal({
+          type: 'error',
+          title: 'Payment Failed',
+          message: `Reason: ${response.error.description || 'Transaction declined'}`
+        });
+      });
+      rzp.open();
+    } catch (err) {
+      document.body.style.overflow = '';
+      setNoticeModal({ type: 'error', title: 'Payment Initiation Error', message: err.response?.data?.error?.message || err.message || 'Payment initiation failed' });
+    } finally {
+      document.body.style.overflow = '';
+      setPurchasingCourseId(null);
+    }
+  };
+
+  const filteredCourses = courses.filter(c => 
+    c.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    c.description?.toLowerCase().includes(searchFilter.toLowerCase())
+  );
+
+  return (
+    <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+      
+      {/* Page Hero Section */}
+      <PageHeader
+        badgeText="Enterprise Training Catalog"
+        titlePrefix="All Available"
+        highlightTitle="Courses & Cohorts"
+        description={`${filteredCourses.length} results found ${searchFilter ? `for "${searchFilter}"` : 'across Mainframe & Data Engineering'}`}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+
+        {paymentStatusAlert && (
+          <div className={`mb-6 p-4 rounded-xl border flex items-center justify-between gap-3 text-sm shadow-sm transition-all ${
+            paymentStatusAlert.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-semibold'
+              : paymentStatusAlert.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-800 font-semibold'
+              : 'bg-amber-50 border-amber-200 text-amber-800 font-semibold'
+          }`}>
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className={`w-5 h-5 shrink-0 ${
+                paymentStatusAlert.type === 'success' ? 'text-emerald-600' : paymentStatusAlert.type === 'error' ? 'text-red-600' : 'text-amber-600'
+              }`} />
+              <span>{paymentStatusAlert.message}</span>
+            </div>
+            <button onClick={() => setPaymentStatusAlert(null)} className="text-xs font-bold opacity-60 hover:opacity-100 p-1 cursor-pointer">
+              ×
+            </button>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="py-12 text-center text-slate-500">Loading course catalog...</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredCourses.map((course) => (
+              <div key={course.id} id={course.slug} className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden flex flex-col justify-between hover:shadow-xl hover:border-blue-300 transition-all duration-300 group">
+                <div className="p-6">
+                  <div className="aspect-video rounded-xl bg-slate-950 mb-5 overflow-hidden relative shadow-inner">
+                    <img src="/assets/hero_banner.png" alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <span className="absolute top-3 left-3 bg-blue-600/95 backdrop-blur-xs text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md uppercase tracking-wider z-10">
+                      Live Cohort
+                    </span>
+                  </div>
+
+                  <h3 className="font-bold text-slate-900 text-xl font-space group-hover:text-blue-600 transition-colors leading-snug">
+                    {course.title}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">{course.description}</p>
+
+                  <div className="flex items-center gap-1.5 mt-3 text-xs">
+                    <span className="font-bold text-slate-900 font-space">4.9</span>
+                    <div className="flex text-amber-400">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                    </div>
+                    <span className="text-slate-400 font-medium">(120+ Enrolled)</span>
+                  </div>
+
+                  <div className="space-y-2 mt-5 pt-4 border-t border-slate-100">
+                    {Array.isArray(course.bullets) && course.bullets.map((b, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>{b}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-6 pt-4 border-t border-slate-100 bg-slate-50/80 space-y-3">
+                  {userEnrollments[Number(course.id)] ? (
+                    <button
+                      onClick={() => navigate('/student/dashboard')}
+                      className="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer hover:bg-emerald-100 transition-all"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Enrolled</span>
+                    </button>
+                  ) : (
+                    <>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs font-semibold text-slate-500">Tuition Fee:</span>
+                        <span className="text-2xl font-extrabold text-slate-900 font-space">₹{course.price_rupees?.toLocaleString()}</span>
+                      </div>
+
+                      <button
+                        onClick={() => handleOpenCheckoutModal(course)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm hover:shadow-md cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Enroll Now</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Checkout & Coupon Modal */}
+      {checkoutCourse && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 w-full max-w-md rounded-xl shadow-2xl overflow-hidden relative">
+            <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100 bg-slate-50">
+              <div>
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-100 px-2 py-0.5 rounded">
+                  Course Checkout
+                </span>
+                <h3 className="text-lg font-bold text-slate-900 font-space mt-1">
+                  {checkoutCourse.title}
+                </h3>
+              </div>
+              <button onClick={() => setCheckoutCourse(null)} className="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none p-1">
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Order Breakdown Summary */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-2 text-xs">
+                <div className="flex justify-between text-slate-600">
+                  <span>Standard Tuition Fee:</span>
+                  <span className="font-bold text-slate-900">₹{checkoutCourse.price_rupees?.toLocaleString()}</span>
+                </div>
+
+                {appliedCoupon && (
+                  <div className="flex justify-between text-emerald-600 font-semibold pt-1 border-t border-slate-200">
+                    <span>Discount ({appliedCoupon.discountPercent}% OFF - {appliedCoupon.code}):</span>
+                    <span>- ₹{(appliedCoupon.discountAmount / 100).toLocaleString()}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200 font-space">
+                  <span>Total Amount Payable:</span>
+                  <span className="text-blue-600">
+                    ₹{appliedCoupon ? (appliedCoupon.finalAmount / 100).toLocaleString() : checkoutCourse.price_rupees?.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Coupon Form */}
+              <form onSubmit={handleApplyCoupon} className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase">Have a Discount Coupon?</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter Code (e.g. FREE100)"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    className="flex-1 bg-white border border-slate-300 rounded-md px-3.5 py-2 text-sm text-slate-900 font-mono uppercase focus:outline-none focus:border-blue-600"
+                  />
+                  <button
+                    type="submit"
+                    disabled={validatingCoupon || !couponCode.trim()}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-md text-xs transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                  >
+                    {validatingCoupon ? 'Applying...' : 'Apply'}
+                  </button>
+                </div>
+
+                {couponStatus && (
+                  <p className={`text-xs font-semibold mt-1.5 ${couponStatus.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {couponStatus.message}
+                  </p>
+                )}
+              </form>
+
+              {/* Checkout CTA */}
+              <button
+                onClick={handleProceedPayment}
+                disabled={purchasingCourseId === checkoutCourse.id}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md text-sm transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {purchasingCourseId === checkoutCourse.id
+                  ? 'Processing Enrollment...'
+                  : appliedCoupon?.isFree
+                  ? 'Unlock Free Access Now'
+                  : 'Proceed to Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Notification Modal */}
+      <NoticeModal modal={noticeModal} onClose={() => setNoticeModal(null)} />
+    </div>
+  );
+};
