@@ -14,6 +14,12 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  if (config.baseURL?.includes('airoapp.ai') || config.url?.includes('airoapp.ai')) {
+    config.params = config.params || {};
+    if (!config.params.airoShareToken) {
+      config.params.airoShareToken = 'u8ct5zZI40N7';
+    }
+  }
   return config;
 }, (error) => Promise.reject(error));
 
