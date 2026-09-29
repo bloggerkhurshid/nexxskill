@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../services/api';
 import { Mail, Phone, MessageSquare, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
+import { SEO } from '../components/SEO';
 
 export const Contact = () => {
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', subject: '', message: '' });
@@ -28,6 +29,12 @@ export const Contact = () => {
 
   return (
     <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+      <SEO
+        title="Contact NexxSkill Support & Admissions"
+        description="Get in touch with NexxSkill Academy. Contact our admissions team for course inquiries, batch timings, and enterprise training consultations."
+        canonical="/contact"
+        keywords="Contact NexxSkill, Mainframe Admissions, Course Inquiry, IT Support, Tech Training Contact"
+      />
       
       {/* Page Hero Section */}
       <PageHeader

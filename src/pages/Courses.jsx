@@ -7,6 +7,7 @@ import { useRazorpay } from '../hooks/useRazorpay';
 import { Star, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { NoticeModal } from '../components/NoticeModal';
+import { SEO } from '../components/SEO';
 
 export const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -249,6 +250,12 @@ export const Courses = () => {
 
   return (
     <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+      <SEO
+        title="Mainframe & Enterprise Software Courses"
+        description="Explore comprehensive IBM System z Mainframe training, COBOL, JCL, DB2, and corporate software engineering cohorts at NexxSkill."
+        canonical="/courses"
+        keywords="Mainframe Courses, COBOL Training, JCL, DB2 Certification, System z Training, IBM Mainframe, Enterprise Cohort"
+      />
       
       {/* Page Hero Section */}
       <PageHeader

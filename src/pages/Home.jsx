@@ -7,6 +7,7 @@ import { useAuthModal } from '../context/AuthModalContext';
 import { useWebinarModal } from '../context/WebinarModalContext';
 import { NoticeModal } from '../components/NoticeModal';
 import { useRazorpay } from '../hooks/useRazorpay';
+import { SEO } from '../components/SEO';
 import heroVideo from '../assets/hero-video.mp4';
 
 export const Home = () => {
@@ -336,6 +337,12 @@ export const Home = () => {
   };
   return (
     <div className="bg-white text-slate-900 font-sans">
+      <SEO
+        title="NexxSkill | Enterprise System z Mainframe & Software Academy"
+        description="Master job-ready IBM System z Mainframe, COBOL, JCL, DB2, and corporate software skills led by industry veteran Jahangir Alom Bakul (IBM & Societe Generale Alum)."
+        canonical="/"
+        keywords="NexxSkill, Mainframe Training, COBOL, JCL, System z, Enterprise Engineering, IBM Mainframe Course"
+      />
       {/* Minimal Modern Hero Section with Subtle Animated Glow */}
       <section className="bg-white py-16 md:py-24 border-b border-slate-100 relative overflow-hidden">
         {/* Subtle Ambient Animated Glow Blobs (Keeps white background pure) */}

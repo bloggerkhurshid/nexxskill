@@ -2,10 +2,17 @@ import React from 'react';
 import { ArrowRight, CheckCircle2, Building2, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
+import { SEO } from '../components/SEO';
 
 export const About = () => {
   return (
     <div className="bg-white text-slate-900 font-sans pb-20">
+      <SEO
+        title="About Us & Lead Mentor Jahangir Alom Bakul"
+        description="Learn about NexxSkill Academy, our mission, and founder Jahangir Alom Bakul (former IBM and Societe Generale Mainframe Specialist)."
+        canonical="/about"
+        keywords="About NexxSkill, Jahangir Alom Bakul, Mainframe Instructor, Enterprise Tech Mentorship, Banking IT Training"
+      />
       
       {/* Page Hero Section */}
       <PageHeader

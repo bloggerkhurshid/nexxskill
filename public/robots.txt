@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /student/
+Disallow: /login
+Disallow: /signup
+
+Sitemap: https://nexxskill.com/sitemap.xml

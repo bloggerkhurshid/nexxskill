@@ -3,6 +3,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { BookOpen, User, CheckCircle, Video, Calendar, ExternalLink, FileText, Download, Printer, Image as ImageIcon, ShieldCheck, Trash2, Maximize } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
+import { SEO } from '../components/SEO';
 
 export const StudentDashboard = () => {
   const { user } = useAuth();
@@ -243,6 +244,11 @@ export const StudentDashboard = () => {
 
   return (
     <div className="bg-white text-slate-900 min-h-screen py-10 font-sans">
+      <SEO
+        title="Student Learning Portal & Courses"
+        description="Access your enrolled Mainframe courses, live session recordings, and official course receipts on NexxSkill."
+        canonical="/student/dashboard"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Header */}

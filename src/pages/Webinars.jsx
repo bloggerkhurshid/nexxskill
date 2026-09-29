@@ -7,6 +7,7 @@ import { useAuthModal } from '../context/AuthModalContext';
 
 import { PageHeader } from '../components/PageHeader';
 import { NoticeModal } from '../components/NoticeModal';
+import { SEO } from '../components/SEO';
 
 export const Webinars = () => {
   const [webinars, setWebinars] = useState([]);
@@ -143,6 +144,12 @@ export const Webinars = () => {
 
   return (
     <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+      <SEO
+        title="Live Technical Webinars & Masterclasses"
+        description="Join live interactive Mainframe masterclasses and watch recorded enterprise deep dives led by industry veteran Jahangir Alom Bakul."
+        canonical="/webinars"
+        keywords="Mainframe Webinars, COBOL Masterclass, Enterprise IT Workshop, System z Webinar, NexxSkill Live Sessions"
+      />
       
       {/* Page Hero Section */}
       <PageHeader
@@ -463,6 +470,12 @@ export const Webinars = () => {
 export const Resources = () => {
   return (
     <div className="bg-white text-slate-900 min-h-screen py-12 font-sans">
+      <SEO
+        title="Free Technical Resources & Cheatsheets"
+        description="Download free IBM System z Mainframe cheatsheets, JCL templates, and developer reference guides."
+        canonical="/resources"
+        keywords="Mainframe Resources, JCL Cheatsheet, COBOL Reference, Free Developer Templates"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
         <div className="border-b border-slate-200 pb-6">
           <h1 className="text-3xl font-extrabold text-slate-900 font-space">Free Technical Resources</h1>

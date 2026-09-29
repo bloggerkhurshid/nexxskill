@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export const Register = () => {
   const [searchParams] = useSearchParams();
@@ -38,6 +39,12 @@ export const Register = () => {
 
   return (
     <div className="bg-white text-slate-900 min-h-screen py-12 font-sans">
+      <SEO
+        title="Register Your Interest & Career Counseling"
+        description="Register your interest for NexxSkill enterprise training cohorts. Book a free 1-on-1 counseling session with our lead instructor."
+        canonical="/register"
+        keywords="Register NexxSkill, Mainframe Counseling, Career Advice, Software Cohort Enrollment"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-2 mb-8">
           <h1 className="text-3xl font-extrabold text-slate-900 font-space">Register Your Interest</h1>

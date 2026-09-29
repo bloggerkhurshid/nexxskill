@@ -1,8 +1,14 @@
 import React from 'react';
+import { SEO } from '../components/SEO';
 
 export const PrivacyPolicy = () => {
   return (
     <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+      <SEO
+        title="Privacy Policy"
+        description="Read NexxSkill's Privacy Policy regarding student data collection, encryption, and protection."
+        canonical="/privacy-policy"
+      />
       
       {/* Page Hero Section matching Home Page structure */}
       <section className="bg-white py-14 md:py-18 border-b border-slate-100 relative overflow-hidden">
@@ -75,6 +81,11 @@ export const PrivacyPolicy = () => {
 export const TermsOfService = () => {
   return (
     <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+      <SEO
+        title="Terms of Service"
+        description="Review terms, student conduct, intellectual property, and policies for NexxSkill courses and webinars."
+        canonical="/terms"
+      />
       
       {/* Page Hero Section matching Home Page structure */}
       <section className="bg-white py-14 md:py-18 border-b border-slate-100 relative overflow-hidden">
@@ -136,6 +147,11 @@ export const TermsOfService = () => {
 export const RefundPolicy = () => {
   return (
     <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+      <SEO
+        title="Refund Policy & Guarantee"
+        description="Review our satisfaction guarantee, cancellation terms, and refund policy for NexxSkill courses."
+        canonical="/refund-policy"
+      />
       
       {/* Page Hero Section matching Home Page structure */}
       <section className="bg-white py-14 md:py-18 border-b border-slate-100 relative overflow-hidden">
