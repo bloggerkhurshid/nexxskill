@@ -239,11 +239,11 @@ export const StudentDashboard = () => {
   };
 
   if (loading) {
-    return <div className="bg-slate-50 text-slate-500 min-h-screen py-16 text-center">Loading dashboard...</div>;
+    return <div className="bg-slate-50 dark:bg-[#080e1a] text-slate-500 dark:text-slate-400 min-h-screen py-16 text-center">Loading dashboard...</div>;
   }
 
   return (
-    <div className="bg-white text-slate-900 min-h-screen py-10 font-sans">
+    <div className="bg-slate-50 dark:bg-[#080e1a] text-slate-900 dark:text-slate-100 min-h-screen py-10 font-sans transition-colors duration-300">
       <SEO
         title="Student Learning Portal & Courses"
         description="Access your enrolled Mainframe courses, live session recordings, and official course receipts on NexxSkill."
@@ -252,19 +252,21 @@ export const StudentDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Header */}
-        <div className="bg-slate-900 text-white p-6 sm:p-8 rounded-xl shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded">
+        <div className="bg-gradient-to-br from-[#0b172a] via-[#1153aa]/90 to-[#080e1a] text-white p-6 sm:p-8 rounded-2xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-[#1a2d52] relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-56 h-56 rounded-full bg-[#2daee8]/20 blur-3xl pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <span className="text-xs font-bold text-[#2daee8] uppercase tracking-widest bg-[#2daee8]/20 border border-[#2daee8]/40 px-2.5 py-1 rounded-full">
               Student Dashboard
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-space mt-2">Welcome back, {profile?.name || user?.name}!</h1>
-            <p className="text-slate-400 text-xs sm:text-sm mt-1">{profile?.email || user?.email}</p>
+            <p className="text-slate-300 text-xs sm:text-sm mt-1">{profile?.email || user?.email}</p>
           </div>
 
-          <div className="flex items-center gap-4 bg-slate-800 p-4 rounded-lg border border-slate-700">
+          <div className="flex items-center gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-700/60 relative z-10">
             <div className="text-right">
-              <h4 className="text-2xl font-bold font-space text-white">{enrollments.filter(e => e.status === 'paid').length}</h4>
-              <p className="text-[10px] text-slate-400 uppercase">Enrolled Courses</p>
+              <h4 className="text-2xl font-bold font-space text-[#2daee8]">{enrollments.filter(e => e.status === 'paid').length}</h4>
+              <p className="text-[10px] text-slate-300 uppercase">Enrolled Courses</p>
             </div>
           </div>
         </div>
@@ -272,35 +274,35 @@ export const StudentDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Enrolled Courses List */}
           <div className="lg:col-span-8 space-y-4">
-            <h2 className="text-xl font-bold text-slate-900 font-space flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white font-space flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-[#2daee8]" />
               <span>Enrolled Courses</span>
             </h2>
 
             {enrollments.length === 0 ? (
-              <div className="bg-white border border-slate-200 p-8 rounded-lg text-center text-slate-500 text-sm">
+              <div className="bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-[#1a2d52] p-8 rounded-2xl text-center text-slate-500 dark:text-slate-400 text-sm">
                 No active course enrollments. Browse our available catalog to enroll!
               </div>
             ) : (
               <div className="space-y-3">
                 {enrollments.map((enr) => (
-                  <div key={enr.id} className="bg-white border border-slate-200 p-5 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                  <div key={enr.id} className="bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-[#1a2d52] p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <span className="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
                           <span>Success</span>
                         </span>
                         <span className="text-xs text-slate-400">• {new Date(enr.created_at).toLocaleDateString()}</span>
                       </div>
-                      <h3 className="text-base font-bold text-slate-900">{enr.course_title}</h3>
-                      <p className="text-xs text-slate-500">Duration: {enr.course_duration}</p>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">{enr.course_title}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Duration: {enr.course_duration}</p>
                     </div>
 
-                    <div className="flex flex-col sm:items-end gap-2 border-t sm:border-0 border-slate-100 pt-2 sm:pt-0">
+                    <div className="flex flex-col sm:items-end gap-2 border-t sm:border-0 border-slate-100 dark:border-[#1a2d52] pt-2 sm:pt-0">
                       <div className="sm:text-right">
-                        <p className="text-xs text-slate-500">Fee Paid:</p>
-                        <p className="text-lg font-bold text-slate-900">₹{enr.amount_rupees?.toLocaleString()}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Fee Paid:</p>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white font-space">₹{enr.amount_rupees?.toLocaleString()}</p>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -310,7 +312,7 @@ export const StudentDashboard = () => {
                               setSelectedVideoModal(enr);
                               setActiveVideoIndex(0);
                             }}
-                            className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-md text-xs transition-colors shadow-2xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 bg-brand-gradient hover:opacity-95 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all shadow-brand-glow cursor-pointer"
                           >
                             <Video className="w-3.5 h-3.5" />
                             <span>Watch Recorded Class</span>
@@ -318,9 +320,9 @@ export const StudentDashboard = () => {
                         )}
                         <button
                           onClick={() => setSelectedInvoice(enr)}
-                          className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-3 py-1.5 rounded-md text-xs border border-slate-300 transition-colors shadow-2xs cursor-pointer"
+                          className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-[#101f3c] hover:bg-slate-200 dark:hover:bg-[#14264b] text-slate-800 dark:text-slate-200 font-bold px-3 py-1.5 rounded-xl text-xs border border-slate-300 dark:border-[#1e3a6a] transition-colors cursor-pointer"
                         >
-                          <FileText className="w-3.5 h-3.5 text-blue-600" />
+                          <FileText className="w-3.5 h-3.5 text-[#2daee8]" />
                           <span>View Invoice</span>
                         </button>
                       </div>
@@ -332,28 +334,28 @@ export const StudentDashboard = () => {
 
             {/* Booked Live Masterclasses & Webinars */}
             <div className="pt-6 space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 font-space flex items-center gap-2">
-                <Video className="w-5 h-5 text-blue-600" />
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white font-space flex items-center gap-2">
+                <Video className="w-5 h-5 text-[#2daee8]" />
                 <span>Booked Live Masterclasses</span>
               </h2>
 
               {webinarBookings.length === 0 ? (
-                <div className="bg-white border border-slate-200 p-6 rounded-lg text-center text-slate-500 text-sm">
+                <div className="bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-[#1a2d52] p-6 rounded-2xl text-center text-slate-500 dark:text-slate-400 text-sm">
                   No upcoming webinar bookings. Browse our Webinars section to reserve your seat!
                 </div>
               ) : (
                 <div className="space-y-3">
                   {webinarBookings.map((wb) => (
-                    <div key={wb.id} className="bg-white border border-slate-200 p-5 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                    <div key={wb.id} className="bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-[#1a2d52] p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                          <span className="bg-[#1153aa]/10 dark:bg-[#2daee8]/20 text-[#2daee8] text-[10px] font-bold px-2 py-0.5 rounded uppercase">
                             Seat Confirmed
                           </span>
                           <span className="text-xs text-slate-400">• Booked on {new Date(wb.created_at).toLocaleDateString()}</span>
                         </div>
-                        <h3 className="text-base font-bold text-slate-900">{wb.webinar_title}</h3>
-                        <p className="text-xs text-blue-600 font-semibold flex items-center gap-1">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">{wb.webinar_title}</h3>
+                        <p className="text-xs text-[#2daee8] font-semibold flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
                           <span>Scheduled: {wb.selected_date}</span>
                         </p>
@@ -364,14 +366,14 @@ export const StudentDashboard = () => {
                           href={wb.meeting_url || 'https://meet.google.com/nexxskill-mainframe-demo'}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-md text-xs transition-colors shadow-xs"
+                          className="inline-flex items-center gap-1.5 bg-brand-gradient hover:opacity-95 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-brand-glow"
                         >
-                          <span>Join Live Session at [{wb.selected_date}]</span>
+                          <span>Join Live Session</span>
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                         <button
                           onClick={() => handleCancelWebinar(wb.webinar_id)}
-                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-md transition-colors cursor-pointer"
+                          className="p-2 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 rounded-xl transition-colors cursor-pointer"
                           title="Cancel / Delete Reservation"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -385,53 +387,53 @@ export const StudentDashboard = () => {
           </div>
 
           {/* Profile Card */}
-          <div className="lg:col-span-4 bg-white border border-slate-200 p-6 rounded-lg space-y-4 shadow-xs">
-            <h2 className="text-lg font-bold text-slate-900 font-space flex items-center gap-2">
-              <User className="w-5 h-5 text-blue-600" />
+          <div className="lg:col-span-4 bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-[#1a2d52] p-6 rounded-2xl space-y-4 shadow-xs">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white font-space flex items-center gap-2">
+              <User className="w-5 h-5 text-[#2daee8]" />
               <span>Profile Settings</span>
             </h2>
 
             {msg && (
-              <div className="p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-xs">
+              <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-xs">
                 {msg}
               </div>
             )}
 
-            <form onSubmit={handleUpdateProfile} className="space-y-3">
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">Full Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-600"
+                  className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#2daee8] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">WhatsApp Number</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">WhatsApp Number</label>
                 <input
                   type="tel"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-600"
+                  className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#2daee8] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Email</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">Email</label>
                 <input
                   type="email"
                   disabled
                   value={profile?.email || ''}
-                  className="w-full bg-slate-100 border border-slate-300 rounded-md px-3.5 py-2 text-sm text-slate-500 cursor-not-allowed"
+                  className="w-full bg-slate-100 dark:bg-[#080e1a]/80 border border-slate-200 dark:border-[#1a2d52] rounded-xl px-3.5 py-2.5 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={updating}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded-md text-sm transition-colors shadow-sm disabled:opacity-50"
+                className="w-full bg-brand-gradient hover:opacity-95 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-brand-glow disabled:opacity-50 cursor-pointer"
               >
                 {updating ? 'Saving...' : 'Update Profile'}
               </button>
@@ -453,7 +455,7 @@ export const StudentDashboard = () => {
                 <button
                   onClick={handleSaveAsImage}
                   disabled={downloadingImage}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                  className="bg-brand-gradient hover:opacity-95 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-brand-glow cursor-pointer disabled:opacity-50"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>{downloadingImage ? 'Generating...' : 'Download Invoice'}</span>
@@ -653,7 +655,7 @@ export const StudentDashboard = () => {
                       }
                     }}
                     title="Toggle Fullscreen"
-                    className="absolute top-3 right-3 bg-slate-900/80 hover:bg-blue-600 text-white p-2 rounded-xl border border-slate-700/80 backdrop-blur-md transition-all opacity-80 hover:opacity-100 cursor-pointer shadow-lg flex items-center gap-1.5 text-xs font-bold"
+                    className="absolute top-3 right-3 bg-slate-900/80 hover:bg-[#1153aa] text-white p-2 rounded-xl border border-slate-700/80 backdrop-blur-md transition-all opacity-80 hover:opacity-100 cursor-pointer shadow-lg flex items-center gap-1.5 text-xs font-bold"
                   >
                     <Maximize className="w-4 h-4" />
                     <span className="hidden sm:inline">Fullscreen</span>
@@ -661,7 +663,7 @@ export const StudentDashboard = () => {
                 </div>
 
                 <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1">
-                  <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-[#2daee8] uppercase tracking-wider bg-[#2daee8]/10 border border-[#2daee8]/20 px-2 py-0.5 rounded">
                     {(Array.isArray(selectedVideoModal.course_videos) && selectedVideoModal.course_videos.length > 0)
                       ? selectedVideoModal.course_videos[activeVideoIndex]?.day
                       : 'Recorded Session'}
@@ -689,29 +691,29 @@ export const StudentDashboard = () => {
                         onClick={() => setActiveVideoIndex(idx)}
                         className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
                           activeVideoIndex === idx
-                            ? 'bg-blue-600/20 border-blue-500 text-white shadow-sm'
+                            ? 'bg-[#1153aa]/30 border-[#2daee8] text-white shadow-sm'
                             : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
                         }`}
                       >
                         <div className="space-y-0.5">
-                          <span className={`text-[10px] font-extrabold uppercase ${activeVideoIndex === idx ? 'text-blue-400' : 'text-slate-400'}`}>
+                          <span className={`text-[10px] font-extrabold uppercase ${activeVideoIndex === idx ? 'text-[#2daee8]' : 'text-slate-400'}`}>
                             {vid.day || `Day ${idx + 1}`}
                           </span>
                           <p className="text-xs font-bold truncate">{vid.title || `Class Session ${idx + 1}`}</p>
                         </div>
-                        <Video className={`w-4 h-4 shrink-0 ${activeVideoIndex === idx ? 'text-blue-400' : 'text-slate-500'}`} />
+                        <Video className={`w-4 h-4 shrink-0 ${activeVideoIndex === idx ? 'text-[#2daee8]' : 'text-slate-500'}`} />
                       </button>
                     ))
                   ) : (
                     <button
                       onClick={() => setActiveVideoIndex(0)}
-                      className="w-full text-left p-3 rounded-xl border bg-blue-600/20 border-blue-500 text-white flex items-center justify-between"
+                      className="w-full text-left p-3 rounded-xl border bg-[#1153aa]/30 border-[#2daee8] text-white flex items-center justify-between"
                     >
                       <div>
-                        <span className="text-[10px] font-extrabold text-blue-400 uppercase">Day 1</span>
+                        <span className="text-[10px] font-extrabold text-[#2daee8] uppercase">Day 1</span>
                         <p className="text-xs font-bold">Main Class Recording</p>
                       </div>
-                      <Video className="w-4 h-4 text-blue-400" />
+                      <Video className="w-4 h-4 text-[#2daee8]" />
                     </button>
                   )}
                 </div>

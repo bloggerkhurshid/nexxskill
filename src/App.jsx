@@ -26,7 +26,7 @@ function App() {
           <ScrollToTop />
           <AuthModalProvider>
             <WebinarModalProvider>
-              <div className="flex flex-col min-h-screen bg-white text-slate-900 font-sans">
+              <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#080e1a] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
                 <Header />
                 <main className="flex-grow">
                   <Routes>

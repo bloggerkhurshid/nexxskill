@@ -1,6 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Calendar, Video, ExternalLink, Play, Clock, ArrowRight, Users, CheckCircle2, AlertCircle, Edit, Star, Trash2 } from 'lucide-react';
+import { 
+  Calendar, 
+  Video, 
+  ExternalLink, 
+  Play, 
+  Clock, 
+  ArrowRight, 
+  Users, 
+  CheckCircle2, 
+  AlertCircle, 
+  Edit, 
+  Star, 
+  Trash2, 
+  Copy, 
+  Check, 
+  Sparkles,
+  ShieldCheck,
+  Flame
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
@@ -13,6 +31,7 @@ export const Webinars = () => {
   const [webinars, setWebinars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedWebinar, setSelectedWebinar] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
@@ -65,6 +84,16 @@ export const Webinars = () => {
   };
 
   const [bookingSuccess, setBookingSuccess] = useState(null);
+
+  const handleCopyLink = (e, url, id) => {
+    e.stopPropagation();
+    const link = url || 'https://meet.google.com/nexxskill-mainframe-demo';
+    navigator.clipboard.writeText(link);
+    setCopiedId(id);
+    setTimeout(() => {
+      setCopiedId(null);
+    }, 2500);
+  };
 
   const handleOpenModal = (webinar) => {
     if (!user) {
@@ -140,216 +169,334 @@ export const Webinars = () => {
       if (!aBooked && bBooked) return 1;
       return 0;
     });
-  const recordings = webinars.filter(w => w.type === 'recording');
 
   return (
-    <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+    <div className="bg-slate-50 dark:bg-[#080e1a] text-slate-900 dark:text-slate-100 min-h-screen font-sans pb-24 transition-colors duration-200">
       <SEO
-        title="Live Technical Webinars & Masterclasses"
-        description="Join live interactive Mainframe masterclasses and watch recorded enterprise deep dives led by industry veteran Jahangir Alom Bakul."
+        title="Live Enterprise Webinars & Bootcamps"
+        description="Join live interactive Mainframe masterclasses and enterprise deep dives led by industry veteran Jahangir Alom Bakul. Direct meeting links and automated reminders available."
         canonical="/webinars"
         keywords="Mainframe Webinars, COBOL Masterclass, Enterprise IT Workshop, System z Webinar, NexxSkill Live Sessions"
       />
       
-      {/* Page Hero Section */}
+      {/* Page Hero Header */}
       <PageHeader
-        badgeText="Live Interactive Sessions"
-        titlePrefix="Technical"
+        badgeText="Interactive Live Bootcamps"
+        titlePrefix="Industry-Leading"
         highlightTitle="Webinars & Masterclasses"
-        description="Live interactive sessions and archived video lessons led by Jahangir Alom Bakul."
+        description="Accelerate your enterprise career with live masterclasses, hands-on Q&A, and direct mentorship from Jahangir Alom Bakul."
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
 
-        {/* Live Sessions */}
-        <div className="mb-14">
-          <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <Video className="w-5 h-5 text-blue-600" />
-            <span>Upcoming Live Sessions</span>
-          </h2>
+        {/* Live Sessions Heading */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white font-space flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-gradient-to-r from-[#1153aa] to-[#2daee8] text-white shadow-sm">
+                <Video className="w-5 h-5" />
+              </span>
+              <span>Upcoming Live Masterclasses</span>
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Select your preferred batch timing. Meeting links can be opened manually or joined directly below.
+            </p>
+          </div>
 
-          {loading ? (
-            <div className="text-center text-slate-500 py-8">Loading webinar sessions...</div>
-          ) : liveWebinars.length === 0 ? (
-            <div className="bg-white border border-slate-200 p-8 rounded-lg text-center text-slate-500 text-sm">
-              No live webinars currently scheduled. Check back soon!
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {liveWebinars.map((webinar) => {
-                const seatsLeft = webinar.seats_left !== undefined ? webinar.seats_left : (webinar.quota || 50) - (webinar.registrations_count || 0);
-                const isFull = seatsLeft <= 0;
-                const isBooked = bookedWebinarIds.map(id => Number(id)).includes(Number(webinar.id));
-                const bookedDate = userBookings[webinar.id]?.selected_date;
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-slate-800 px-3.5 py-1.5 rounded-full shadow-2xs self-start sm:self-auto">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Live Reminders: 30 Min Before Join</span>
+          </div>
+        </div>
 
-                return (
-                  <div
-                    key={webinar.id}
-                    className={`bg-white border rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-200 ${
-                      isBooked
-                        ? 'border-slate-900 shadow-md ring-2 ring-slate-900/10'
-                        : 'border-slate-200 hover:border-blue-400 hover:shadow-md'
-                    }`}
-                  >
-                    {/* Header Banner & Status */}
-                    <div className="p-6 space-y-4">
-                      <div className="flex items-center justify-between gap-2">
-                        {isBooked ? (
-                          <span className="bg-slate-900 text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
-                            <span>Seat Reserved</span>
-                          </span>
-                        ) : (
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
-                            <Video className="w-3 h-3 text-blue-600" />
-                            <span>Live Masterclass</span>
-                          </span>
-                        )}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <div className="w-10 h-10 border-3 border-[#1153aa] border-t-[#2daee8] rounded-full animate-spin"></div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Loading masterclass sessions & seat availability...</p>
+          </div>
+        ) : liveWebinars.length === 0 ? (
+          <div className="bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-slate-800 p-12 rounded-3xl text-center space-y-3 shadow-xs">
+            <Video className="w-12 h-12 text-slate-400 mx-auto" />
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 font-space">No Live Sessions Currently Scheduled</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Our enterprise mentors are scheduling new interactive weekend cohorts. Check back shortly or browse our recorded archives!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {liveWebinars.map((webinar) => {
+              const quota = webinar.quota || 50;
+              const bookedCount = webinar.registrations_count || 0;
+              const seatsLeft = webinar.seats_left !== undefined ? webinar.seats_left : Math.max(0, quota - bookedCount);
+              const isFull = seatsLeft <= 0;
+              const percentBooked = Math.min(100, Math.round((bookedCount / quota) * 100));
+              const isBooked = bookedWebinarIds.map(id => Number(id)).includes(Number(webinar.id));
+              const bookedDate = userBookings[webinar.id]?.selected_date;
+              const meetingLink = webinar.meeting_url || 'https://meet.google.com/nexxskill-mainframe-demo';
+              const isCopied = copiedId === webinar.id;
 
-                        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                          isBooked
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : isFull
-                            ? 'bg-red-50 text-red-700 border border-red-200'
-                            : 'bg-slate-100 text-slate-700 border border-slate-200'
-                        }`}>
-                          {isBooked ? 'Active Booking' : isFull ? 'Quota Full' : `${seatsLeft} Seats Left`}
+              return (
+                <div
+                  key={webinar.id}
+                  className={`bg-white dark:bg-[#0d172e] border rounded-3xl overflow-hidden flex flex-col justify-between transition-all duration-300 group ${
+                    isBooked
+                      ? 'border-[#2daee8] ring-2 ring-[#2daee8]/20 shadow-lg dark:shadow-[#2daee8]/5'
+                      : 'border-slate-200/90 dark:border-slate-800/90 hover:border-[#2daee8]/60 hover:shadow-xl hover:shadow-[#2daee8]/10'
+                  }`}
+                >
+                  {/* Top Area: Badges & Info */}
+                  <div className="p-6 space-y-5">
+                    
+                    {/* Header Pill Badges */}
+                    <div className="flex items-center justify-between gap-2">
+                      {isBooked ? (
+                        <span className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Seat Confirmed</span>
                         </span>
+                      ) : (
+                        <span className="bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 text-[#1153aa] dark:text-[#2daee8] text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+                          <Video className="w-3 h-3 text-[#2daee8]" />
+                          <span>Live Bootcamp</span>
+                        </span>
+                      )}
+
+                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        isBooked
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                          : isFull
+                          ? 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
+                          : 'bg-slate-100 dark:bg-[#121f3d] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                      }`}>
+                        {isBooked ? 'Active Booking' : isFull ? 'Batch Full' : `${seatsLeft} Seats Left`}
+                      </span>
+                    </div>
+
+                    {/* Title & Description */}
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 dark:text-white text-lg font-space leading-snug group-hover:text-[#1153aa] dark:group-hover:text-[#2daee8] transition-colors">
+                        {webinar.title}
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed mt-2.5 line-clamp-3">
+                        {webinar.description}
+                      </p>
+                    </div>
+
+                    {/* Mentor Info Pill */}
+                    <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 dark:bg-[#080e1a] border border-slate-200/70 dark:border-slate-800/80">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1153aa] to-[#2daee8] text-white font-extrabold text-xs flex items-center justify-center font-space shadow-xs shrink-0">
+                        JB
                       </div>
-
-                      {/* Title & Description */}
-                      <div>
-                        <h3 className="font-extrabold text-slate-900 text-lg font-space leading-snug hover:text-blue-600 transition-colors">
-                          {webinar.title}
-                        </h3>
-                        <p className="text-slate-600 text-xs leading-relaxed mt-2 line-clamp-3">{webinar.description}</p>
-                      </div>
-
-                      {/* Instructor Chip */}
-                      <div className="flex items-center gap-3 pt-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center font-space shadow-xs">
-                          JB
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-900">Jahangir Alom Bakul</p>
-                          <p className="text-[10px] text-slate-500">IBM & Societe Generale Alum</p>
-                        </div>
-                      </div>
-
-                      {/* Schedule Info Box */}
-                      <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-xl text-xs space-y-2">
-                        <div className="flex items-center justify-between text-slate-700">
-                          <span className="text-slate-500 font-semibold">Seat Quota:</span>
-                          <span className="font-bold text-slate-900">{webinar.registrations_count || 0} / {webinar.quota || 50} Seats</span>
-                        </div>
-
-                        {isBooked && bookedDate ? (
-                          <div className="pt-2 border-t border-slate-200 text-slate-800 font-medium">
-                            <span className="text-slate-500 text-[10px] font-bold uppercase block mb-0.5">Your Reserved Slot:</span>
-                            <span className="font-bold text-blue-600 text-xs flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                              <span>{bookedDate}</span>
-                            </span>
-                          </div>
-                        ) : (
-                          Array.isArray(webinar.available_dates) && webinar.available_dates.length > 0 && (
-                            <div className="pt-2 border-t border-slate-200 text-slate-600">
-                              <span className="text-slate-500 text-[10px] font-bold uppercase block mb-0.5">Available Dates:</span>
-                              <span className="font-medium text-slate-800 text-xs">{webinar.available_dates.join(', ')}</span>
-                            </div>
-                          )
-                        )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">Jahangir Alom Bakul</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Ex-IBM & Societe Generale Enterprise Specialist</p>
                       </div>
                     </div>
 
-                    {/* Bottom Action Footer */}
-                    <div className="p-6 pt-3 border-t border-slate-100 bg-slate-50/80 space-y-3">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xs text-slate-500 font-semibold">Session Access:</span>
-                        <span className="text-sm font-extrabold text-blue-600 font-space uppercase">100% Free Entry</span>
+                    {/* Live Slots Booked Visual Counter & Progress Bar */}
+                    <div className="bg-slate-50 dark:bg-[#080e1a] border border-slate-200/80 dark:border-slate-800/80 p-4 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
+                          <Users className="w-3.5 h-3.5 text-[#1153aa] dark:text-[#2daee8]" />
+                          <span>Seats Booked:</span>
+                        </div>
+                        <div className="font-extrabold text-slate-900 dark:text-white font-space text-xs">
+                          <span className="text-[#1153aa] dark:text-[#2daee8] text-sm">{bookedCount}</span>
+                          <span className="text-slate-400 font-normal"> / {quota} Slots</span>
+                        </div>
                       </div>
 
-                      {isBooked ? (
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={webinar.meeting_url || 'https://meet.google.com/nexxskill-mainframe-demo'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shadow-sm text-center flex items-center justify-center gap-1.5"
-                          >
-                            <span>Join Live Room</span>
-                            <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-                          </a>
-                          <button
-                            onClick={() => handleOpenModal(webinar)}
-                            className="p-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl transition-colors cursor-pointer"
-                            title="Edit Reserved Timing"
-                          >
-                            <Edit className="w-4 h-4 text-blue-600" />
-                          </button>
-                          <button
-                            onClick={() => handleCancelBooking(webinar.id)}
-                            className="p-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl transition-colors cursor-pointer"
-                            title="Cancel / Delete Reservation"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                      {/* Visual Progress Track */}
+                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
+                        <div 
+                          className="h-full rounded-full bg-gradient-to-r from-[#1153aa] to-[#2daee8] transition-all duration-700 shadow-xs"
+                          style={{ width: `${percentBooked}%` }}
+                        />
+                      </div>
+
+                      {/* Dynamic Seats Status Text */}
+                      <div className="flex items-center justify-between text-[11px] pt-0.5">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">
+                          {percentBooked}% Occupied
+                        </span>
+                        {isFull ? (
+                          <span className="text-red-500 font-bold">Sold Out</span>
+                        ) : seatsLeft <= 10 ? (
+                          <span className="text-amber-500 dark:text-amber-400 font-bold flex items-center gap-1">
+                            <Flame className="w-3 h-3" />
+                            <span>Only {seatsLeft} left!</span>
+                          </span>
+                        ) : (
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                            Seats Filling Fast
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Booked Date Alert or Available Dates */}
+                      {isBooked && bookedDate ? (
+                        <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800/80 text-xs">
+                          <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Your Confirmed Slot:</span>
+                          <span className="font-bold text-[#1153aa] dark:text-[#2daee8] flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 shrink-0" />
+                            <span>{bookedDate}</span>
+                          </span>
                         </div>
                       ) : (
+                        Array.isArray(webinar.available_dates) && webinar.available_dates.length > 0 && (
+                          <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800/80 text-xs">
+                            <span className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Available Batches:</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs block truncate">
+                              {webinar.available_dates.join(' • ')}
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+
+                    {/* Manual Meeting Link Direct Box */}
+                    <div className="p-3 rounded-2xl bg-blue-50/60 dark:bg-[#121f3d]/60 border border-blue-100 dark:border-[#1a2d52] space-y-2">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-[#1153aa] dark:text-[#2daee8] uppercase tracking-wider flex items-center gap-1">
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Direct Meeting URL</span>
+                        </span>
+                        <button
+                          onClick={(e) => handleCopyLink(e, meetingLink, webinar.id)}
+                          className="text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:text-[#1153aa] dark:hover:text-[#2daee8] flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Copy direct meeting link"
+                        >
+                          {isCopied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                              <span className="text-emerald-500">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copy Link</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="text-[10px] font-mono text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-[#080e1a]/80 px-2.5 py-1.5 rounded-lg border border-slate-200/60 dark:border-slate-800 truncate">
+                        {meetingLink}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Bottom Action Footer */}
+                  <div className="p-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-[#0b1428] space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 dark:text-slate-400 font-semibold">Registration Cost:</span>
+                      <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-space bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                        100% Free Entry
+                      </span>
+                    </div>
+
+                    {isBooked ? (
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 bg-gradient-to-r from-[#1153aa] to-[#2daee8] hover:opacity-95 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md shadow-[#2daee8]/20 text-center flex items-center justify-center gap-2"
+                        >
+                          <span>Open Live Room</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                        <button
+                          onClick={() => handleOpenModal(webinar)}
+                          className="p-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl transition-colors cursor-pointer"
+                          title="Change Batch Timing"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleCancelBooking(webinar.id)}
+                          className="p-3 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl transition-colors cursor-pointer"
+                          title="Cancel Reservation"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleOpenModal(webinar)}
                           disabled={isFull}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+                          className="flex-1 bg-gradient-to-r from-[#1153aa] to-[#2daee8] hover:shadow-lg hover:shadow-[#2daee8]/25 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
                         >
-                          <span>{isFull ? 'Quota Full' : 'Reserve Seat & Submit Query'}</span>
+                          <span>{isFull ? 'Batch Full' : 'Book Free Seat'}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
-                      )}
-                    </div>
+                        <a
+                          href={meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-3 bg-slate-100 dark:bg-[#121f3d] border border-slate-200 dark:border-slate-800 hover:border-[#2daee8] text-slate-700 dark:text-slate-300 rounded-xl transition-colors cursor-pointer"
+                          title="Open Meeting Room Directly in Browser"
+                        >
+                          <ExternalLink className="w-4 h-4 text-[#2daee8]" />
+                        </a>
+                      </div>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
       </div>
 
-      {/* Webinar Registration & Query Modal */}
+      {/* Webinar Registration Modal */}
       {selectedWebinar && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-lg shadow-xl overflow-hidden relative">
-            <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900 font-space">
-                Register & Submit Query: {selectedWebinar.title}
-              </h3>
-              <button onClick={() => setSelectedWebinar(null)} className="text-slate-400 hover:text-slate-700 text-xl font-bold">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2daee8]">NexxSkill Masterclass</span>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white font-space mt-0.5">
+                  {selectedWebinar.title}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedWebinar(null)} 
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center text-lg font-bold transition-colors cursor-pointer"
+              >
                 ×
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-5">
               {bookingSuccess ? (
-                <div className="space-y-4 text-center py-2">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-7 h-7" />
+                <div className="space-y-5 text-center py-2">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
+                    <CheckCircle2 className="w-8 h-8" />
                   </div>
 
                   <div>
-                    <h4 className="text-xl font-bold text-slate-900 font-space">{bookingSuccess.message}</h4>
-                    <p className="text-slate-500 text-xs mt-1">A confirmation has been logged for {bookingSuccess.userEmail}</p>
+                    <h4 className="text-xl font-extrabold text-slate-900 dark:text-white font-space">{bookingSuccess.message}</h4>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
+                      A confirmation reminder will be sent to <strong>{bookingSuccess.userEmail}</strong> 30 minutes before the session starts.
+                    </p>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-left space-y-3 text-xs">
+                  <div className="bg-slate-50 dark:bg-[#080e1a] border border-slate-200/80 dark:border-slate-800/80 p-4 rounded-2xl text-left space-y-3 text-xs">
                     <div>
                       <span className="text-slate-400 font-bold uppercase block text-[10px]">Session Title</span>
-                      <span className="font-bold text-slate-900 text-sm">{bookingSuccess.webinarTitle}</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-sm">{bookingSuccess.webinarTitle}</span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
                       <div>
-                        <span className="text-slate-400 font-bold uppercase block text-[10px]">Booked Date & Time</span>
-                        <span className="font-bold text-blue-600 flex items-center gap-1 mt-0.5">
+                        <span className="text-slate-400 font-bold uppercase block text-[10px]">Booked Batch</span>
+                        <span className="font-bold text-[#1153aa] dark:text-[#2daee8] flex items-center gap-1 mt-0.5">
                           <Calendar className="w-3.5 h-3.5" />
                           <span>{bookingSuccess.bookedDate}</span>
                         </span>
@@ -357,24 +504,37 @@ export const Webinars = () => {
 
                       <div>
                         <span className="text-slate-400 font-bold uppercase block text-[10px]">Status</span>
-                        <span className="font-bold text-emerald-600 flex items-center gap-1 mt-0.5">
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Confirmed</span>
                         </span>
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-200">
-                      <span className="text-slate-400 font-bold uppercase block text-[10px] mb-1">Live Meeting Access Link</span>
-                      <a
-                        href={bookingSuccess.meetingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center w-full gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-md text-xs transition-colors shadow-xs"
-                      >
-                        <span>Join Live Session at [{bookingSuccess.bookedDate}]</span>
-                        <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                      </a>
+                    {/* Manual Meeting Room Access Link */}
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                      <span className="text-slate-500 dark:text-slate-400 font-bold uppercase block text-[10px]">Live Meeting Access Link</span>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={bookingSuccess.meetingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#1153aa] to-[#2daee8] hover:opacity-95 text-white font-bold px-4 py-3 rounded-xl text-xs transition-all shadow-md shadow-[#2daee8]/20"
+                        >
+                          <span>Open Live Room Now</span>
+                          <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                        </a>
+                        <button
+                          onClick={(e) => handleCopyLink(e, bookingSuccess.meetingUrl, 'modal')}
+                          className="p-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl transition-colors cursor-pointer"
+                          title="Copy meeting link"
+                        >
+                          {copiedId === 'modal' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 text-center font-mono truncate">
+                        {bookingSuccess.meetingUrl}
+                      </p>
                     </div>
                   </div>
 
@@ -383,28 +543,32 @@ export const Webinars = () => {
                       setBookingSuccess(null);
                       setSelectedWebinar(null);
                     }}
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded-md text-xs transition-colors"
+                    className="w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-colors cursor-pointer"
                   >
-                    Done
+                    Done & Return to Sessions
                   </button>
                 </div>
               ) : (
                 <>
                   {status && (
-                    <div className={`p-3 rounded-md flex items-center gap-2 text-xs ${status.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+                    <div className={`p-3.5 rounded-xl flex items-center gap-2.5 text-xs ${
+                      status.type === 'success' 
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300' 
+                        : 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
+                    }`}>
                       {status.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />}
                       <span>{status.message}</span>
                     </div>
                   )}
 
                   <form onSubmit={handleSubmitRegistration} className="space-y-4">
-                    {/* Logged in User Profile Info Summary */}
-                    <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-md space-y-2 text-xs">
+                    {/* Logged in User Credentials */}
+                    <div className="bg-slate-50 dark:bg-[#080e1a] border border-slate-200/80 dark:border-slate-800/80 p-3.5 rounded-2xl space-y-2 text-xs">
                       <div className="flex items-center justify-between text-slate-500 font-bold uppercase text-[10px]">
-                        <span>Profile Credentials</span>
-                        <span className="text-blue-600 font-bold">Verified Account</span>
+                        <span>Profile Info</span>
+                        <span className="text-[#2daee8] font-bold">Verified Account</span>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-slate-200 text-slate-900">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
                         <div>
                           <span className="text-slate-400 block text-[10px]">Full Name</span>
                           <span className="font-bold">{user?.name || formData.name}</span>
@@ -414,19 +578,20 @@ export const Webinars = () => {
                           <span className="font-bold truncate block">{user?.email || formData.email}</span>
                         </div>
                         <div>
-                          <span className="text-slate-400 block text-[10px]">WhatsApp Number</span>
+                          <span className="text-slate-400 block text-[10px]">WhatsApp</span>
                           <span className="font-bold">{user?.phone || formData.phone || 'N/A'}</span>
                         </div>
                       </div>
                     </div>
 
+                    {/* Batch Selection */}
                     {Array.isArray(selectedWebinar.available_dates) && selectedWebinar.available_dates.length > 0 && (
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Select Available Date / Session *</label>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">Select Preferred Batch *</label>
                         <select
                           value={formData.selected_date}
                           onChange={(e) => setFormData({ ...formData, selected_date: e.target.value })}
-                          className="w-full bg-white border border-slate-300 rounded-md px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-600"
+                          className="w-full bg-white dark:bg-[#080e1a] border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2daee8]"
                         >
                           {selectedWebinar.available_dates.map((d, i) => (
                             <option key={i} value={d}>{d}</option>
@@ -435,23 +600,30 @@ export const Webinars = () => {
                       </div>
                     )}
 
+                    {/* Query for speaker */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Specific Query or Question for Speaker</label>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">Question for Speaker (Optional)</label>
                       <textarea
                         rows="3"
                         value={formData.question}
                         onChange={(e) => setFormData({ ...formData, question: e.target.value })}
                         placeholder="Ask any technical or career question for the live session..."
-                        className="w-full bg-white border border-slate-300 rounded-md px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-600"
+                        className="w-full bg-white dark:bg-[#080e1a] border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2daee8] placeholder-slate-400"
                       />
+                    </div>
+
+                    {/* Automated Reminder Notice */}
+                    <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-[#121f3d]/70 border border-blue-100 dark:border-[#1a2d52] text-[11px] text-[#1153aa] dark:text-[#2daee8] flex items-center gap-2">
+                      <Clock className="w-4 h-4 shrink-0" />
+                      <span>An automated reminder email with your join link will be sent <strong>30 minutes</strong> before the session starts.</span>
                     </div>
 
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-md text-sm transition-colors shadow-sm disabled:opacity-50"
+                      className="w-full bg-gradient-to-r from-[#1153aa] to-[#2daee8] hover:shadow-lg hover:shadow-[#2daee8]/25 text-white font-bold py-3.5 px-4 rounded-xl text-xs transition-all shadow-md disabled:opacity-50 cursor-pointer"
                     >
-                      {submitting ? 'Reserving Seat...' : 'Confirm Registration'}
+                      {submitting ? 'Reserving Your Free Seat...' : 'Confirm Free Registration'}
                     </button>
                   </form>
                 </>
@@ -469,7 +641,7 @@ export const Webinars = () => {
 
 export const Resources = () => {
   return (
-    <div className="bg-white text-slate-900 min-h-screen py-12 font-sans">
+    <div className="bg-slate-50 dark:bg-[#080e1a] text-slate-900 dark:text-slate-100 min-h-screen py-16 font-sans transition-colors duration-200">
       <SEO
         title="Free Technical Resources & Cheatsheets"
         description="Download free IBM System z Mainframe cheatsheets, JCL templates, and developer reference guides."
@@ -477,22 +649,27 @@ export const Resources = () => {
         keywords="Mainframe Resources, JCL Cheatsheet, COBOL Reference, Free Developer Templates"
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-        <div className="border-b border-slate-200 pb-6">
-          <h1 className="text-3xl font-extrabold text-slate-900 font-space">Free Technical Resources</h1>
-          <p className="text-slate-500 text-sm mt-1">Downloadable Mainframe cheatsheets and JCL templates</p>
-        </div>
+        <PageHeader
+          badgeText="Developer Cheatsheets"
+          titlePrefix="Free"
+          highlightTitle="Technical Resources"
+          description="Curated enterprise Mainframe reference guides, JCL syntax cards, and COBOL sample workflows."
+        />
 
-        <div className="bg-white border border-slate-200 p-10 rounded-lg shadow-xs space-y-4">
-          <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto">
-            <Clock className="w-6 h-6" />
+        <div className="bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-slate-800 p-12 rounded-3xl shadow-xs space-y-4 max-w-2xl mx-auto">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#1153aa] to-[#2daee8] text-white flex items-center justify-center mx-auto shadow-md shadow-[#2daee8]/20">
+            <Clock className="w-7 h-7" />
           </div>
-          <h3 className="text-xl font-bold text-slate-900">New Technical Materials Incoming</h3>
-          <p className="text-slate-600 text-sm max-w-md mx-auto leading-relaxed">
-            We are curating high-density Mainframe & Data Engineering cheatsheets. Check back shortly or browse our available courses.
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white font-space">Enterprise Cheatsheets Incoming</h3>
+          <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm max-w-md mx-auto leading-relaxed">
+            We are curating high-density Mainframe, DB2, and COBOL cheatsheets for live cohort members. Browse our available courses in the meantime!
           </p>
-          <div className="pt-2">
-            <Link to="/courses" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-md text-xs transition-colors">
-              <span>Browse All Courses</span>
+          <div className="pt-3">
+            <Link 
+              to="/courses" 
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#1153aa] to-[#2daee8] text-white font-bold px-6 py-3 rounded-xl text-xs transition-all shadow-md shadow-[#2daee8]/20 hover:opacity-95"
+            >
+              <span>Explore All Courses</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

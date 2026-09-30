@@ -249,7 +249,7 @@ export const Courses = () => {
   );
 
   return (
-    <div className="bg-white text-slate-900 min-h-screen font-sans pb-20">
+    <div className="bg-slate-50 dark:bg-[#080e1a] text-slate-900 dark:text-slate-100 min-h-screen font-sans pb-20 transition-colors duration-300">
       <SEO
         title="Mainframe & Enterprise Software Courses"
         description="Explore comprehensive IBM System z Mainframe training, COBOL, JCL, DB2, and corporate software engineering cohorts at NexxSkill."
@@ -270,14 +270,14 @@ export const Courses = () => {
         {paymentStatusAlert && (
           <div className={`mb-6 p-4 rounded-xl border flex items-center justify-between gap-3 text-sm shadow-sm transition-all ${
             paymentStatusAlert.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-semibold'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-semibold'
               : paymentStatusAlert.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-800 font-semibold'
-              : 'bg-amber-50 border-amber-200 text-amber-800 font-semibold'
+              ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 font-semibold'
+              : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 font-semibold'
           }`}>
             <div className="flex items-center gap-2.5">
               <AlertCircle className={`w-5 h-5 shrink-0 ${
-                paymentStatusAlert.type === 'success' ? 'text-emerald-600' : paymentStatusAlert.type === 'error' ? 'text-red-600' : 'text-amber-600'
+                paymentStatusAlert.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : paymentStatusAlert.type === 'error' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'
               }`} />
               <span>{paymentStatusAlert.message}</span>
             </div>
@@ -288,61 +288,61 @@ export const Courses = () => {
         )}
 
         {loading ? (
-          <div className="py-12 text-center text-slate-500">Loading course catalog...</div>
+          <div className="py-12 text-center text-slate-500 dark:text-slate-400">Loading course catalog...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredCourses.map((course) => (
-              <div key={course.id} id={course.slug} className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden flex flex-col justify-between hover:shadow-xl hover:border-blue-300 transition-all duration-300 group">
+              <div key={course.id} id={course.slug} className="bg-white dark:bg-[#0d172e] border border-slate-200/90 dark:border-[#1a2d52] rounded-2xl overflow-hidden flex flex-col justify-between hover:shadow-xl hover:border-[#2daee8] dark:hover:border-[#2daee8] transition-all duration-300 group">
                 <div className="p-6">
                   <div className="aspect-video rounded-xl bg-slate-950 mb-5 overflow-hidden relative shadow-inner">
                     <img src="/assets/hero_banner.png" alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <span className="absolute top-3 left-3 bg-blue-600/95 backdrop-blur-xs text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md uppercase tracking-wider z-10">
+                    <span className="absolute top-3 left-3 bg-brand-gradient text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md uppercase tracking-wider z-10">
                       Live Cohort
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-slate-900 text-xl font-space group-hover:text-blue-600 transition-colors leading-snug">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-xl font-space group-hover:text-[#2daee8] transition-colors leading-snug">
                     {course.title}
                   </h3>
-                  <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">{course.description}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 leading-relaxed">{course.description}</p>
 
                   <div className="flex items-center gap-1.5 mt-3 text-xs">
-                    <span className="font-bold text-slate-900 font-space">4.9</span>
+                    <span className="font-bold text-slate-900 dark:text-white font-space">4.9</span>
                     <div className="flex text-amber-400">
                       {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
                     </div>
                     <span className="text-slate-400 font-medium">(120+ Enrolled)</span>
                   </div>
 
-                  <div className="space-y-2 mt-5 pt-4 border-t border-slate-100">
+                  <div className="space-y-2 mt-5 pt-4 border-t border-slate-100 dark:border-[#1a2d52]">
                     {Array.isArray(course.bullets) && course.bullets.map((b, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#2daee8] shrink-0" />
                         <span>{b}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="p-6 pt-4 border-t border-slate-100 bg-slate-50/80 space-y-3">
+                <div className="p-6 pt-4 border-t border-slate-100 dark:border-[#1a2d52] bg-slate-50/80 dark:bg-[#101f3c]/60 space-y-3">
                   {userEnrollments[Number(course.id)] ? (
                     <button
                       onClick={() => navigate('/student/dashboard')}
-                      className="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer hover:bg-emerald-100 transition-all"
+                      className="w-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>Enrolled</span>
                     </button>
                   ) : (
                     <>
                       <div className="flex items-baseline justify-between">
-                        <span className="text-xs font-semibold text-slate-500">Tuition Fee:</span>
-                        <span className="text-2xl font-extrabold text-slate-900 font-space">₹{course.price_rupees?.toLocaleString()}</span>
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tuition Fee:</span>
+                        <span className="text-2xl font-extrabold text-slate-900 dark:text-white font-space">₹{course.price_rupees?.toLocaleString()}</span>
                       </div>
 
                       <button
                         onClick={() => handleOpenCheckoutModal(course)}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-sm hover:shadow-md cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full bg-brand-gradient hover:opacity-95 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-brand-glow cursor-pointer flex items-center justify-center gap-2"
                       >
                         <span>Enroll Now</span>
                       </button>
@@ -357,40 +357,40 @@ export const Courses = () => {
 
       {/* Checkout & Coupon Modal */}
       {checkoutCourse && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 w-full max-w-md rounded-xl shadow-2xl overflow-hidden relative">
-            <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100 bg-slate-50">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0d172e] border border-slate-200 dark:border-[#1a2d52] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative">
+            <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-[#1a2d52] bg-slate-50 dark:bg-[#101f3c]">
               <div>
-                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-100 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold text-[#2daee8] uppercase tracking-widest bg-[#2daee8]/15 px-2 py-0.5 rounded">
                   Course Checkout
                 </span>
-                <h3 className="text-lg font-bold text-slate-900 font-space mt-1">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white font-space mt-1">
                   {checkoutCourse.title}
                 </h3>
               </div>
-              <button onClick={() => setCheckoutCourse(null)} className="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none p-1">
+              <button onClick={() => setCheckoutCourse(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-2xl font-bold leading-none p-1">
                 ×
               </button>
             </div>
 
             <div className="p-6 space-y-5">
               {/* Order Breakdown Summary */}
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-2 text-xs">
-                <div className="flex justify-between text-slate-600">
+              <div className="bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] p-4 rounded-xl space-y-2 text-xs">
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
                   <span>Standard Tuition Fee:</span>
-                  <span className="font-bold text-slate-900">₹{checkoutCourse.price_rupees?.toLocaleString()}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">₹{checkoutCourse.price_rupees?.toLocaleString()}</span>
                 </div>
 
                 {appliedCoupon && (
-                  <div className="flex justify-between text-emerald-600 font-semibold pt-1 border-t border-slate-200">
+                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold pt-1 border-t border-slate-200 dark:border-[#1e3a6a]">
                     <span>Discount ({appliedCoupon.discountPercent}% OFF - {appliedCoupon.code}):</span>
                     <span>- ₹{(appliedCoupon.discountAmount / 100).toLocaleString()}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200 font-space">
+                <div className="flex justify-between text-sm font-extrabold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-[#1e3a6a] font-space">
                   <span>Total Amount Payable:</span>
-                  <span className="text-blue-600">
+                  <span className="text-[#2daee8]">
                     ₹{appliedCoupon ? (appliedCoupon.finalAmount / 100).toLocaleString() : checkoutCourse.price_rupees?.toLocaleString()}
                   </span>
                 </div>
@@ -398,26 +398,26 @@ export const Courses = () => {
 
               {/* Coupon Form */}
               <form onSubmit={handleApplyCoupon} className="space-y-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase">Have a Discount Coupon?</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Have a Discount Coupon?</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="Enter Code (e.g. FREE100)"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    className="flex-1 bg-white border border-slate-300 rounded-md px-3.5 py-2 text-sm text-slate-900 font-mono uppercase focus:outline-none focus:border-blue-600"
+                    className="flex-1 bg-white dark:bg-[#080e1a] border border-slate-300 dark:border-[#1e3a6a] rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white font-mono uppercase focus:outline-none focus:border-[#2daee8]"
                   />
                   <button
                     type="submit"
                     disabled={validatingCoupon || !couponCode.trim()}
-                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-md text-xs transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                    className="bg-[#1153aa] hover:bg-[#0e4388] text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors disabled:opacity-50 cursor-pointer shrink-0"
                   >
                     {validatingCoupon ? 'Applying...' : 'Apply'}
                   </button>
                 </div>
 
                 {couponStatus && (
-                  <p className={`text-xs font-semibold mt-1.5 ${couponStatus.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <p className={`text-xs font-semibold mt-1.5 ${couponStatus.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                     {couponStatus.message}
                   </p>
                 )}
@@ -427,7 +427,7 @@ export const Courses = () => {
               <button
                 onClick={handleProceedPayment}
                 disabled={purchasingCourseId === checkoutCourse.id}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md text-sm transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                className="w-full bg-brand-gradient hover:opacity-95 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition-all shadow-brand-glow disabled:opacity-50 cursor-pointer"
               >
                 {purchasingCourseId === checkoutCourse.id
                   ? 'Processing Enrollment...'
