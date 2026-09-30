@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Star, ShieldCheck, Play, Pause, Award, Clock, ArrowRight, CheckCircle, Users, Terminal, Cpu, Check, Loader2, X, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { Star, ShieldCheck, Play, Pause, Award, Clock, ArrowRight, CheckCircle, Users, Terminal, Cpu, Check, Loader2, X, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, HelpCircle, Video } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
