@@ -95,6 +95,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (updatedFields) => {
+    setUser((prev) => {
+      const updated = { ...(prev || {}), ...updatedFields };
+      localStorage.setItem('nexxskill_user', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('nexxskill_token');
@@ -102,7 +110,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, sendRegisterOtp, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, sendRegisterOtp, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

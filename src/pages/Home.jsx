@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Star, ShieldCheck, Award, Clock, ArrowRight, Terminal, Cpu, Check, Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, HelpCircle, Video } from 'lucide-react';
+import { Star, ShieldCheck, Award, Clock, ArrowRight, Terminal, Cpu, Check, Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, HelpCircle, Video, Phone } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
@@ -30,10 +30,11 @@ export const Home = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [paymentStatusAlert, setPaymentStatusAlert] = useState(null);
 
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { openAuthModal } = useAuthModal();
   const navigate = useNavigate();
   const cashfreeLoaded = useCashfree();
+  const [phoneInput, setPhoneInput] = useState('');
 
   const [faqs, setFaqs] = useState([]);
   const [openFaqIdx, setOpenFaqIdx] = useState(null);
@@ -168,6 +169,8 @@ export const Home = () => {
     setCouponStatus(null);
     setAppliedCoupon(null);
     setErrorMsg('');
+    const userPhone = (user?.phone || '').toString().replace(/[^0-9]/g, '').slice(-10);
+    setPhoneInput(userPhone);
   };
 
   const handleApplyCoupon = async (e) => {
@@ -204,14 +207,25 @@ export const Home = () => {
       return;
     }
 
+    const cleanPhone = (user?.phone || phoneInput || '').toString().replace(/[^0-9]/g, '').slice(-10);
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      setErrorMsg('Please enter your 10-digit mobile number before proceeding to payment.');
+      return;
+    }
+
     setPurchasingCourseId(checkoutCourse.id);
     setErrorMsg('');
 
     try {
       const orderRes = await api.post('/payments/create-order', {
         courseId: checkoutCourse.id,
-        couponCode: appliedCoupon ? appliedCoupon.code : ''
+        couponCode: appliedCoupon ? appliedCoupon.code : '',
+        phone: cleanPhone
       });
+
+      if (cleanPhone && cleanPhone !== user?.phone) {
+        updateUser({ phone: cleanPhone });
+      }
 
       if (!orderRes.data?.success) {
         throw new Error(orderRes.data?.error?.message || 'Failed to create payment order');
@@ -927,6 +941,45 @@ export const Home = () => {
                   </p>
                 )}
               </form>
+
+              {/* Phone Number Input if missing */}
+              {(!user?.phone || user.phone.replace(/[^0-9]/g, '').length < 10) && (
+                <div className="bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/60 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-[#2daee8]" />
+                      <span>Mobile Number</span>
+                    </span>
+                    <span className="text-[10px] bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 font-bold px-2 py-0.5 rounded-full uppercase">
+                      Required for Cashfree
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">+91</span>
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      value={phoneInput}
+                      onChange={(e) => {
+                        setPhoneInput(e.target.value.replace(/[^0-9]/g, ''));
+                        setErrorMsg('');
+                      }}
+                      placeholder="Enter 10-digit mobile number"
+                      className="w-full pl-11 pr-3.5 py-2.5 bg-white dark:bg-[#080e1a] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-[#2daee8]"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Used for your official Cashfree payment receipt and WhatsApp lab mentorship.
+                  </p>
+                </div>
+              )}
+
+              {errorMsg && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="pt-2">
