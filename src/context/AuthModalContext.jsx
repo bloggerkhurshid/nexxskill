@@ -89,6 +89,9 @@ export const AuthModalProvider = ({ children }) => {
       const res = await sendRegisterOtp(email.trim(), name.trim());
       setSignupStep('otp');
       setResendCooldown(60);
+      if (res?.data?.devOtp) {
+        setOtp(res.data.devOtp);
+      }
       setInfoMessage(res?.message || `A 6-digit verification code was sent to ${email.trim()}`);
     } catch (err) {
       setError(err.message || 'Failed to send verification code. Please check your email and try again.');
@@ -107,6 +110,9 @@ export const AuthModalProvider = ({ children }) => {
     try {
       const res = await sendRegisterOtp(email.trim(), name.trim());
       setResendCooldown(60);
+      if (res?.data?.devOtp) {
+        setOtp(res.data.devOtp);
+      }
       setInfoMessage(res?.message || 'New verification code sent! Check your inbox or spam folder.');
     } catch (err) {
       setError(err.message || 'Failed to resend verification code');
