@@ -260,9 +260,20 @@ export const AuthModalProvider = ({ children }) => {
                 </div>
 
                 {error && (
-                  <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs flex items-center gap-2.5 animate-in fade-in duration-150">
-                    <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-                    <span className="font-semibold leading-relaxed">{error}</span>
+                  <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs flex items-center justify-between gap-2 animate-in fade-in duration-150">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                      <span className="font-semibold leading-relaxed">{error}</span>
+                    </div>
+                    {error.toLowerCase().includes('already exists') && mode === 'signup' && (
+                      <button
+                        type="button"
+                        onClick={() => { setMode('login'); setError(''); setInfoMessage(''); }}
+                        className="text-[#2daee8] hover:text-[#1153aa] dark:hover:text-sky-300 underline font-bold whitespace-nowrap cursor-pointer shrink-0 ml-2"
+                      >
+                        Sign in now →
+                      </button>
+                    )}
                   </div>
                 )}
 
