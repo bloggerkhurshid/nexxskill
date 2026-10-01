@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://y343zqkiye.preview.c35.airoapp.ai';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://nexxskill-api.c35.airoapp.ai';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -14,13 +14,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  const isAiro = (config.baseURL && config.baseURL.includes('airoapp.ai')) || 
-                 (config.url && config.url.includes('airoapp.ai')) ||
-                 (API_BASE_URL && API_BASE_URL.includes('airoapp.ai'));
-  if (isAiro) {
+  if (import.meta.env.VITE_AIRO_SHARE_TOKEN) {
     config.params = config.params || {};
     if (!config.params.airoShareToken) {
-      config.params.airoShareToken = 'u8ct5zZI40N7';
+      config.params.airoShareToken = import.meta.env.VITE_AIRO_SHARE_TOKEN;
     }
   }
   return config;

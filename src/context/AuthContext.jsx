@@ -30,27 +30,37 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    if (res.data?.success) {
-      const { user, tokens } = res.data.data;
-      setUser(user);
-      localStorage.setItem('nexxskill_token', tokens.access_token);
-      localStorage.setItem('nexxskill_user', JSON.stringify(user));
-      return user;
+    try {
+      const res = await api.post('/auth/login', { email, password });
+      if (res.data?.success) {
+        const { user, tokens } = res.data.data;
+        setUser(user);
+        localStorage.setItem('nexxskill_token', tokens.access_token);
+        localStorage.setItem('nexxskill_user', JSON.stringify(user));
+        return user;
+      }
+      throw new Error(res.data?.error?.message || 'Login failed');
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Invalid email or password';
+      throw new Error(msg);
     }
-    throw new Error(res.data?.error?.message || 'Login failed');
   };
 
   const register = async (name, email, phone, password) => {
-    const res = await api.post('/auth/register', { name, email, phone, password });
-    if (res.data?.success) {
-      const { user, tokens } = res.data.data;
-      setUser(user);
-      localStorage.setItem('nexxskill_token', tokens.access_token);
-      localStorage.setItem('nexxskill_user', JSON.stringify(user));
-      return user;
+    try {
+      const res = await api.post('/auth/register', { name, email, phone, password });
+      if (res.data?.success) {
+        const { user, tokens } = res.data.data;
+        setUser(user);
+        localStorage.setItem('nexxskill_token', tokens.access_token);
+        localStorage.setItem('nexxskill_user', JSON.stringify(user));
+        return user;
+      }
+      throw new Error(res.data?.error?.message || 'Registration failed');
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Registration failed';
+      throw new Error(msg);
     }
-    throw new Error(res.data?.error?.message || 'Registration failed');
   };
 
   const logout = () => {

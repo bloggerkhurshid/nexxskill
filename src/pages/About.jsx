@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, CheckCircle2, Building2, Award } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { SEO } from '../components/SEO';
@@ -8,10 +8,10 @@ export const About = () => {
   return (
     <div className="bg-slate-50 dark:bg-[#080e1a] text-slate-900 dark:text-slate-100 font-sans pb-20 transition-colors duration-300">
       <SEO
-        title="About Us & Lead Mentor Jahangir Alom Bakul"
-        description="Learn about NexxSkill Academy, our mission, and founder Jahangir Alom Bakul (former IBM and Societe Generale Mainframe Specialist)."
+        title="About NexxSkill Academy | Enterprise Mainframe & Software"
+        description="Learn about NexxSkill Academy, our mission, hands-on Mainframe, COBOL, DB2, and System z enterprise software engineering mentorship."
         canonical="/about"
-        keywords="About NexxSkill, Jahangir Alom Bakul, Mainframe Instructor, Enterprise Tech Mentorship, Banking IT Training"
+        keywords="About NexxSkill, Mainframe Academy, Enterprise Tech Mentorship, Banking IT Training, COBOL, System z"
       />
       
       {/* Page Hero Section */}
@@ -24,61 +24,6 @@ export const About = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-16">
-        
-        {/* Founder & Instructor Spotlight Card */}
-        <div className="bg-gradient-to-br from-[#0b172a] via-[#0d1f3f] to-[#080e1a] border border-[#1a2d52] text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
-          <div className="absolute -right-16 -top-16 w-80 h-80 bg-[#2daee8]/15 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
-            
-            {/* Photo Box */}
-            <div className="lg:col-span-5">
-              <div className="aspect-square w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-700/60 shadow-2xl relative group">
-                <img
-                  src="/assets/jahangir.jpg"
-                  alt="Jahangir Alom Bakul"
-                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute bottom-3 left-3 bg-slate-950/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-800 text-white text-[11px] font-semibold flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>Founder & Lead Mentor</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Bio Info */}
-            <div className="lg:col-span-7 space-y-6">
-              <div>
-                <span className="text-xs font-bold text-[#2daee8] uppercase tracking-widest font-space">Instructor Profile</span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-white font-space mt-1">
-                  Jahangir Alom Bakul
-                </h2>
-                <p className="text-sm font-semibold text-slate-300 mt-1">
-                  Ex-Societe Generale & IBM System z Mainframe Specialist
-                </p>
-              </div>
-
-              <p className="text-slate-300 text-sm leading-relaxed">
-                With over a decade of hands-on corporate engineering experience at global financial institutions, Jahangir Bakul has trained and mentored over 600 software engineers in high-throughput COBOL batch processing, JCL automation, DB2 databases, and IBM System z architecture.
-              </p>
-
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-700/60 text-center">
-                <div className="space-y-1">
-                  <h4 className="text-2xl font-extrabold text-[#2daee8] font-space">10+ Yrs</h4>
-                  <p className="text-[11px] text-slate-400 font-medium">Enterprise Exp</p>
-                </div>
-                <div className="space-y-1 border-l border-slate-700/60">
-                  <h4 className="text-2xl font-extrabold text-emerald-400 font-space">600+</h4>
-                  <p className="text-[11px] text-slate-400 font-medium">Engineers Mentored</p>
-                </div>
-                <div className="space-y-1 border-l border-slate-700/60">
-                  <h4 className="text-2xl font-extrabold text-sky-400 font-space">IBM & SG</h4>
-                  <p className="text-[11px] text-slate-400 font-medium">Corporate Background</p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
 
         {/* Why NexxSkill Grid Cards */}
         <div className="space-y-6">

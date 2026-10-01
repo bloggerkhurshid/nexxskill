@@ -1,14 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Star, ShieldCheck, Play, Pause, Award, Clock, ArrowRight, CheckCircle, Users, Terminal, Cpu, Check, Loader2, X, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, HelpCircle, Video } from 'lucide-react';
+import { Star, ShieldCheck, Award, Clock, ArrowRight, Terminal, Cpu, Check, Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, HelpCircle, Video } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
 import { useWebinarModal } from '../context/WebinarModalContext';
+import { useCashfree } from '../hooks/useCashfree';
 import { NoticeModal } from '../components/NoticeModal';
-import { useRazorpay } from '../hooks/useRazorpay';
 import { SEO } from '../components/SEO';
-import heroVideo from '../assets/hero-video.mp4';
 
 export const Home = () => {
   const [courses, setCourses] = useState([]);
@@ -34,28 +33,11 @@ export const Home = () => {
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
   const navigate = useNavigate();
-  const razorpayLoaded = useRazorpay();
+  const cashfreeLoaded = useCashfree();
 
   const [faqs, setFaqs] = useState([]);
   const [openFaqIdx, setOpenFaqIdx] = useState(null);
 
-  const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-
-  const toggleVideoPlay = () => {
-    if (videoRef.current) {
-      if (videoRef.current.muted) {
-        videoRef.current.muted = false;
-      }
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPlaying(true);
-      } else {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      }
-    }
-  };
 
   useEffect(() => {
     fetchCourses();
@@ -63,22 +45,7 @@ export const Home = () => {
     fetchFaqs();
   }, [user]);
 
-  useEffect(() => {
-    if (videoRef.current) {
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => setIsPlaying(true))
-          .catch(() => {
-            // Autoplay with audio was blocked by browser policy -> play muted initially to guarantee autoplay
-            if (videoRef.current) {
-              videoRef.current.muted = true;
-              videoRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-            }
-          });
-      }
-    }
-  }, []);
+
 
   const fetchFaqs = async () => {
     try {
@@ -232,8 +199,8 @@ export const Home = () => {
 
   const handleProceedPayment = async () => {
     if (!checkoutCourse) return;
-    if (!razorpayLoaded && !appliedCoupon?.isFree) {
-      setNoticeModal({ type: 'info', title: 'SDK Loading', message: 'Payment SDK is loading, please try again in a moment.' });
+    if (!cashfreeLoaded && !appliedCoupon?.isFree) {
+      setNoticeModal({ type: 'info', title: 'Gateway Loading', message: 'Payment gateway is initializing, please try again in a moment.' });
       return;
     }
 
@@ -261,30 +228,34 @@ export const Home = () => {
         return;
       }
 
-      const { orderId, amount, currency, keyId, courseTitle } = orderRes.data.data;
+      const { orderId, paymentSessionId, environment, isDemo } = orderRes.data.data;
 
-      const options = {
-        key: keyId,
-        amount: amount,
-        currency: currency,
-        name: 'NexxSkill Academy',
-        description: courseTitle,
-        ...(orderId && !orderId.startsWith('order_demo_') ? { order_id: orderId } : {}),
-        prefill: {
-          name: user.name || '',
-          email: user.email || '',
-          contact: user.phone || ''
-        },
-        theme: {
-          color: '#1e3a8a'
-        },
-        handler: async (response) => {
+      // Real Cashfree Modal Checkout
+      if (window.Cashfree && paymentSessionId && !isDemo && !paymentSessionId.includes('demo')) {
+        const cashfree = window.Cashfree({
+          mode: environment === 'production' ? 'production' : 'sandbox'
+        });
+
+        cashfree.checkout({
+          paymentSessionId: paymentSessionId,
+          redirectTarget: "_modal"
+        }).then(async (result) => {
           document.body.style.overflow = '';
+          setPurchasingCourseId(null);
+
+          if (result.error) {
+            setNoticeModal({
+              type: 'info',
+              title: 'Payment Incomplete',
+              message: result.error.message || 'Payment window closed or cancelled.'
+            });
+            return;
+          }
+
+          // Verify with server
           try {
             const verifyRes = await api.post('/payments/verify', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature
+              order_id: orderId
             });
 
             if (verifyRes.data?.success) {
@@ -296,34 +267,54 @@ export const Home = () => {
                 onClose: () => navigate('/student/dashboard')
               });
             } else {
-              setNoticeModal({ type: 'error', title: 'Payment Verification Failed', message: 'Payment verification failed. Please contact support.' });
+              setNoticeModal({
+                type: 'error',
+                title: 'Payment Verification',
+                message: verifyRes.data?.error?.message || 'Payment verification failed. Please contact support.'
+              });
             }
           } catch (vErr) {
-            setNoticeModal({ type: 'error', title: 'Payment Verification Error', message: vErr.response?.data?.error?.message || 'Payment verification failed.' });
+            setNoticeModal({
+              type: 'error',
+              title: 'Payment Verification Error',
+              message: vErr.response?.data?.error?.message || 'Payment verification failed.'
+            });
           }
-        },
-        modal: {
-          ondismiss: () => {
-            document.body.style.overflow = '';
-            setPurchasingCourseId(null);
-            setNoticeModal({ type: 'info', title: 'Payment Cancelled', message: 'Payment process was cancelled by user.' });
-          }
-        }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response) {
-        document.body.style.overflow = '';
-        setNoticeModal({
-          type: 'error',
-          title: 'Payment Failed',
-          message: `Reason: ${response.error.description || 'Transaction declined'}`
         });
-      });
-      rzp.open();
+      } else {
+        // Demo / Simulation Mode
+        try {
+          const verifyRes = await api.post('/payments/verify', {
+            order_id: orderId,
+            payment_id: `cf_demo_${Date.now()}`
+          });
+
+          if (verifyRes.data?.success) {
+            setCheckoutCourse(null);
+            setNoticeModal({
+              type: 'success',
+              title: 'Payment Successful',
+              message: 'Course enrollment confirmed! Access activated on your dashboard.',
+              onClose: () => navigate('/student/dashboard')
+            });
+          } else {
+            throw new Error('Verification failed');
+          }
+        } catch (vErr) {
+          setNoticeModal({
+            type: 'error',
+            title: 'Payment Verification Error',
+            message: vErr.response?.data?.error?.message || 'Payment verification error.'
+          });
+        }
+      }
     } catch (err) {
       document.body.style.overflow = '';
-      setNoticeModal({ type: 'error', title: 'Payment Initiation Error', message: err.response?.data?.error?.message || err.message || 'Payment initiation failed' });
+      setNoticeModal({
+        type: 'error',
+        title: 'Payment Initiation Error',
+        message: err.response?.data?.error?.message || err.message || 'Payment initiation failed'
+      });
     } finally {
       document.body.style.overflow = '';
       setPurchasingCourseId(null);
@@ -343,15 +334,12 @@ export const Home = () => {
         canonical="/"
         keywords="NexxSkill, Mainframe Training, COBOL, JCL, System z, Enterprise Engineering, IBM Mainframe Course"
       />
-      {/* Modern Hero Section with #1153aa & #2daee8 Accents */}
-      <section className="bg-white dark:bg-[#080e1a] py-16 md:py-24 border-b border-slate-200/80 dark:border-slate-800/80 relative overflow-hidden transition-colors duration-200">
-        {/* Subtle Ambient Animated Glow Blobs */}
-        <div className="absolute top-10 left-10 w-96 h-96 bg-[#1153aa]/10 rounded-full blur-3xl pointer-events-none animate-float-glow-1"></div>
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#2daee8]/10 rounded-full blur-3xl pointer-events-none animate-float-glow-2"></div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* Clean & Simple Enterprise Hero Section */}
+      <section className="bg-white dark:bg-[#080e1a] py-14 sm:py-20 border-b border-slate-200 dark:border-slate-800/80 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
           {paymentStatusAlert && (
-            <div className={`mb-8 p-4 rounded-2xl border flex items-center justify-between gap-3 text-sm shadow-md transition-all ${
+            <div className={`mb-8 p-4 rounded-xl border flex items-center justify-between gap-3 text-sm shadow-xs transition-all ${
               paymentStatusAlert.type === 'success'
                 ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-semibold'
                 : paymentStatusAlert.type === 'error'
@@ -360,7 +348,7 @@ export const Home = () => {
             }`}>
               <div className="flex items-center gap-2.5">
                 <AlertCircle className={`w-5 h-5 shrink-0 ${
-                  paymentStatusAlert.type === 'success' ? 'text-emerald-600' : paymentStatusAlert.type === 'error' ? 'text-red-600' : 'text-amber-600'
+                  paymentStatusAlert.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : paymentStatusAlert.type === 'error' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'
                 }`} />
                 <span>{paymentStatusAlert.message}</span>
               </div>
@@ -369,85 +357,129 @@ export const Home = () => {
               </button>
             </div>
           )}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             
-            {/* Left Content */}
+            {/* Left Column: Direct, Clean Content */}
             <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 dark:bg-[#0d172e] border border-blue-200/80 dark:border-[#1a2d52] text-[#1153aa] dark:text-[#2daee8] text-xs font-bold tracking-wide shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-[#2daee8] animate-pulse"></span>
-                <span>Enterprise Engineering Academy</span>
+              
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-[#0d172e] border border-slate-200 dark:border-[#1a2d52] text-xs font-semibold text-slate-800 dark:text-[#2daee8]">
+                <span className="w-2 h-2 rounded-full bg-[#2daee8]"></span>
+                <span>System z Mainframe Training • Cohorts 2026</span>
               </div>
 
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white font-space tracking-tight leading-[1.12]">
-                Master <span className="bg-gradient-to-r from-[#1153aa] to-[#2daee8] bg-clip-text text-transparent">System z Mainframes</span> & High-Scale Systems
+              {/* Main Headline */}
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white font-space tracking-tight leading-[1.18]">
+                Master IBM Mainframe & Enterprise Banking Engineering
               </h1>
 
-              <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed max-w-xl">
-                Industry-focused Mainframe, COBOL, JCL, and Data mentorship by Jahangir Alom Bakul (IBM & Societe Generale Alum).
+              {/* Concise Sub-headline */}
+              <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl">
+                Hands-on training on live IBM z/OS emulators with COBOL, JCL, DB2, and VSAM. Mentored directly by former IBM & Societe Generale specialist <span className="font-semibold text-slate-900 dark:text-white">Jahangir Alom Bakul</span>.
               </p>
 
-              <div className="pt-2 flex flex-wrap items-center gap-4">
+              {/* Clean Action Buttons */}
+              <div className="pt-2 flex flex-wrap items-center gap-3.5">
                 <Link
                   to="/courses"
-                  className="bg-gradient-to-r from-[#1153aa] to-[#2daee8] hover:shadow-lg hover:shadow-[#2daee8]/25 text-white font-bold px-7 py-3.5 rounded-xl text-sm transition-all shadow-md flex items-center gap-2"
+                  className="bg-brand-gradient hover:opacity-95 text-white font-bold px-6 py-3.5 rounded-xl text-sm transition-all shadow-brand-glow flex items-center gap-2 cursor-pointer"
                 >
-                  <span>Explore Courses</span>
+                  <span>Browse Courses</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
                 <Link
                   to="/webinars"
-                  className="bg-white dark:bg-[#0d172e] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-bold px-7 py-3.5 rounded-xl text-sm transition-all shadow-xs cursor-pointer flex items-center gap-2"
+                  className="bg-white dark:bg-[#0d172e] hover:bg-slate-50 dark:hover:bg-[#121f3d] text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-[#1a2d52] font-bold px-6 py-3.5 rounded-xl text-sm transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
                   <Video className="w-4 h-4 text-[#2daee8]" />
                   <span>Book Free Webinar</span>
                 </Link>
               </div>
 
-              <div className="pt-6 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-4 text-xs text-slate-500 dark:text-slate-400">
+              {/* Clean Trust Strip */}
+              <div className="pt-6 border-t border-slate-200 dark:border-slate-800 grid grid-cols-3 gap-4 text-xs">
                 <div>
-                  <span className="block font-extrabold text-slate-900 dark:text-white text-base font-space">10+ Yrs</span>
-                  <span>Corporate Exp</span>
+                  <span className="block font-bold text-slate-900 dark:text-white text-lg font-space">10+ Years</span>
+                  <span className="text-slate-500 dark:text-slate-400">Enterprise Exp</span>
                 </div>
                 <div>
-                  <span className="block font-extrabold text-slate-900 dark:text-white text-base font-space">IBM & SG</span>
-                  <span>Veteran Mentor</span>
+                  <span className="block font-bold text-slate-900 dark:text-white text-lg font-space">600+</span>
+                  <span className="text-slate-500 dark:text-slate-400">Engineers Trained</span>
                 </div>
                 <div>
-                  <span className="block font-extrabold text-[#1153aa] dark:text-[#2daee8] text-base font-space">600+</span>
-                  <span>Engineers Mentored</span>
+                  <span className="block font-bold text-[#1153aa] dark:text-[#2daee8] text-lg font-space">4.9 / 5</span>
+                  <span className="text-slate-500 dark:text-slate-400">Alumni Rating</span>
                 </div>
               </div>
+
             </div>
 
-            {/* Right Video Container */}
+            {/* Right Column: Sleek, Crisp Terminal Preview Card (No Video) */}
             <div className="lg:col-span-6">
-              <div
-                onClick={toggleVideoPlay}
-                className="rounded-3xl overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-slate-950 aspect-video ring-1 ring-slate-200 dark:ring-slate-700/80 relative cursor-pointer group"
-              >
-                <video
-                  ref={videoRef}
-                  src={heroVideo}
-                  onContextMenu={(e) => e.preventDefault()}
-                  autoPlay
-                  loop
-                  playsInline
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  className="w-full h-full object-cover"
-                />
+              <div className="bg-slate-900 rounded-2xl border border-slate-200 dark:border-[#1a2d52] shadow-xl overflow-hidden text-left">
+                
+                {/* Terminal Header */}
+                <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                    <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+                    <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+                    <span className="ml-2 font-mono text-xs text-slate-300 font-semibold">IBM z/OS 2.5 • Terminal Session</span>
+                  </div>
+                  <span className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-emerald-400 bg-emerald-950/70 border border-emerald-800/60 px-2.5 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>ONLINE</span>
+                  </span>
+                </div>
 
-                {/* Subtle Play/Pause Overlay Indicator on Hover or Click */}
-                <div className={`absolute inset-0 flex items-center justify-center bg-slate-900/30 transition-opacity ${isPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
-                  <div className="w-14 h-14 rounded-2xl bg-white/95 dark:bg-[#0d172e]/95 text-slate-900 dark:text-white flex items-center justify-center shadow-lg backdrop-blur-xs transition-transform group-hover:scale-110">
-                    {isPlaying ? <Pause className="w-6 h-6 fill-current text-[#1153aa] dark:text-[#2daee8]" /> : <Play className="w-6 h-6 fill-current text-[#1153aa] dark:text-[#2daee8] ml-0.5" />}
+                {/* Terminal Code Window */}
+                <div className="p-5 font-mono text-xs space-y-2 text-slate-300 leading-relaxed bg-[#0a0f1d] selection:bg-[#2daee8]/30">
+                  <div className="text-slate-500">// REAL BATCH COBOL &amp; JCL EXECUTION PIPELINE</div>
+                  <div>
+                    <span className="text-purple-400">//NEXXJOB</span> <span className="text-sky-300">JOB</span> (BANKING),<span className="text-emerald-400">'SYSTEM Z LAB'</span>,CLASS=A
+                  </div>
+                  <div>
+                    <span className="text-purple-400">//STEP01</span>  <span className="text-sky-300">EXEC</span> PGM=COBTRAN1,REGION=0M
+                  </div>
+                  <div>
+                    <span className="text-purple-400">//STEPLIB</span> <span className="text-sky-300">DD</span> DSN=SYS1.COBOL.LOADLIB,DISP=SHR
+                  </div>
+                  <div>
+                    <span className="text-purple-400">//VSAMDB</span>  <span className="text-sky-300">DD</span> DSN=BANK.DATA.ACCOUNTS.KSDS,DISP=SHR
+                  </div>
+                  <div className="pt-2 text-emerald-400 flex items-center gap-2">
+                    <span>==&gt; [SUCCESS] COMPILE OK, RETURN CODE = 0000</span>
+                  </div>
+                  <div className="text-slate-400 text-[11px] pt-1">
+                    <span>Processed: 45,000 Banking Records • High Throughput: 12ms</span>
                   </div>
                 </div>
+
+                {/* Live Highlights Strip */}
+                <div className="p-4 bg-slate-950/90 border-t border-slate-800 grid grid-cols-2 gap-3">
+                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                    <Terminal className="w-4 h-4 text-[#2daee8] shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-white font-space">COBOL &amp; JCL</p>
+                      <p className="text-[10px] text-slate-400">Production batch jobs</p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                    <Cpu className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-white font-space">IBM z16 System</p>
+                      <p className="text-[10px] text-slate-400">Real emulator terminal</p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
           </div>
+
         </div>
       </section>
 
@@ -932,7 +964,7 @@ export const Home = () => {
                   ) : appliedCoupon?.isFree ? (
                     <span>Unlock Course 100% Free</span>
                   ) : (
-                    <span>Proceed to Secure Razorpay Checkout</span>
+                    <span>Proceed to Secure Cashfree Checkout</span>
                   )}
                 </button>
               </div>

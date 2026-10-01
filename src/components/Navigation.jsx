@@ -45,9 +45,8 @@ export const Header = () => {
             />
             <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-[#1153aa]/20 to-[#2daee8]/20 blur-xs -z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           </div>
-          <span className="text-xl font-extrabold tracking-tight font-space">
-            <span className="text-[#1153aa] dark:text-blue-400">Nexx</span>
-            <span className="text-[#2daee8]">Skill</span>
+          <span className="text-xl font-extrabold tracking-tight font-space text-black dark:text-white transition-colors">
+            NexxSkill
           </span>
         </Link>
 
@@ -190,7 +189,21 @@ export const Header = () => {
             ))}
           </nav>
           
-          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2.5">
+          {/* Mobile Theme Toggle */}
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-[#0d172e] border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200"
+            >
+              <div className="flex items-center gap-2">
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#1153aa]" />}
+                <span>Theme: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+              </div>
+              <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">Tap to change</span>
+            </button>
+          </div>
+          
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2.5">
             {user ? (
               <div className="space-y-2">
                 <Link
@@ -302,7 +315,7 @@ export const Footer = () => {
               <div className="pt-1">
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Razorpay PCI-DSS Verified</span>
+                  <span>Cashfree PCI-DSS 256-Bit Secure</span>
                 </span>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
-import { useRazorpay } from '../hooks/useRazorpay';
+import { useCashfree } from '../hooks/useCashfree';
 import { Star, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { NoticeModal } from '../components/NoticeModal';
@@ -18,7 +18,7 @@ export const Courses = () => {
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
   const navigate = useNavigate();
-  const razorpayLoaded = useRazorpay();
+  const cashfreeLoaded = useCashfree();
   const [searchParams] = useSearchParams();
   const searchFilter = searchParams.get('search') || '';
 
@@ -144,8 +144,8 @@ export const Courses = () => {
 
   const handleProceedPayment = async () => {
     if (!checkoutCourse) return;
-    if (!razorpayLoaded && !appliedCoupon?.isFree) {
-      setNoticeModal({ type: 'info', title: 'SDK Loading', message: 'Payment SDK is loading, please try again in a moment.' });
+    if (!cashfreeLoaded && !appliedCoupon?.isFree) {
+      setNoticeModal({ type: 'info', title: 'Gateway Loading', message: 'Payment gateway is initializing, please try again in a moment.' });
       return;
     }
 
@@ -174,30 +174,34 @@ export const Courses = () => {
         return;
       }
 
-      const { orderId, amount, currency, keyId, courseTitle } = orderRes.data.data;
+      const { orderId, paymentSessionId, environment, isDemo } = orderRes.data.data;
 
-      const options = {
-        key: keyId,
-        amount: amount,
-        currency: currency,
-        name: 'NexxSkill Academy',
-        description: courseTitle,
-        ...(orderId && !orderId.startsWith('order_demo_') ? { order_id: orderId } : {}),
-        prefill: {
-          name: user.name || '',
-          email: user.email || '',
-          contact: user.phone || ''
-        },
-        theme: {
-          color: '#1e3a8a'
-        },
-        handler: async (response) => {
+      // Real Cashfree Modal Checkout
+      if (window.Cashfree && paymentSessionId && !isDemo && !paymentSessionId.includes('demo')) {
+        const cashfree = window.Cashfree({
+          mode: environment === 'production' ? 'production' : 'sandbox'
+        });
+
+        cashfree.checkout({
+          paymentSessionId: paymentSessionId,
+          redirectTarget: "_modal"
+        }).then(async (result) => {
           document.body.style.overflow = '';
+          setPurchasingCourseId(null);
+
+          if (result.error) {
+            setNoticeModal({
+              type: 'info',
+              title: 'Payment Incomplete',
+              message: result.error.message || 'Checkout was cancelled or closed.'
+            });
+            return;
+          }
+
+          // Verify payment with server
           try {
             const verifyRes = await api.post('/payments/verify', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature
+              order_id: orderId
             });
 
             if (verifyRes.data?.success) {
@@ -209,34 +213,54 @@ export const Courses = () => {
                 onClose: () => navigate('/student/dashboard')
               });
             } else {
-              setNoticeModal({ type: 'error', title: 'Payment Verification Failed', message: 'Payment verification failed. Please contact support.' });
+              setNoticeModal({
+                type: 'error',
+                title: 'Payment Verification',
+                message: verifyRes.data?.error?.message || 'Payment verification failed. Please contact support.'
+              });
             }
           } catch (vErr) {
-            setNoticeModal({ type: 'error', title: 'Payment Verification Error', message: vErr.response?.data?.error?.message || 'Payment verification failed.' });
+            setNoticeModal({
+              type: 'error',
+              title: 'Payment Verification Error',
+              message: vErr.response?.data?.error?.message || 'Payment verification failed.'
+            });
           }
-        },
-        modal: {
-          ondismiss: () => {
-            document.body.style.overflow = '';
-            setPurchasingCourseId(null);
-            setNoticeModal({ type: 'info', title: 'Payment Cancelled', message: 'Payment process was cancelled by user.' });
-          }
-        }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response) {
-        document.body.style.overflow = '';
-        setNoticeModal({
-          type: 'error',
-          title: 'Payment Failed',
-          message: `Reason: ${response.error.description || 'Transaction declined'}`
         });
-      });
-      rzp.open();
+      } else {
+        // Demo / Simulation Mode
+        try {
+          const verifyRes = await api.post('/payments/verify', {
+            order_id: orderId,
+            payment_id: `cf_demo_${Date.now()}`
+          });
+
+          if (verifyRes.data?.success) {
+            setCheckoutCourse(null);
+            setNoticeModal({
+              type: 'success',
+              title: 'Payment Successful',
+              message: 'Course enrollment confirmed! Access activated on your dashboard.',
+              onClose: () => navigate('/student/dashboard')
+            });
+          } else {
+            throw new Error('Verification failed');
+          }
+        } catch (vErr) {
+          setNoticeModal({
+            type: 'error',
+            title: 'Payment Verification Error',
+            message: vErr.response?.data?.error?.message || 'Payment verification error.'
+          });
+        }
+      }
     } catch (err) {
       document.body.style.overflow = '';
-      setNoticeModal({ type: 'error', title: 'Payment Initiation Error', message: err.response?.data?.error?.message || err.message || 'Payment initiation failed' });
+      setNoticeModal({
+        type: 'error',
+        title: 'Payment Initiation Error',
+        message: err.response?.data?.error?.message || err.message || 'Payment initiation failed'
+      });
     } finally {
       document.body.style.overflow = '';
       setPurchasingCourseId(null);

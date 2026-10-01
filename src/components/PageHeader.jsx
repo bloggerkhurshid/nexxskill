@@ -16,7 +16,7 @@ export const PageHeader = ({ badgeText, titlePrefix, highlightTitle, titleSuffix
 
         <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white font-space tracking-tight leading-tight">
           {titlePrefix}{' '}
-          <span className="bg-gradient-to-r from-[#1153aa] to-[#2daee8] bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-[#1153aa] to-[#2daee8] dark:from-[#2daee8] dark:to-[#60a5fa] bg-clip-text text-transparent">
             {highlightTitle}
           </span>
           {titleSuffix && ` ${titleSuffix}`}
