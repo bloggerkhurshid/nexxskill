@@ -46,9 +46,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, phone, password) => {
+  const sendRegisterOtp = async (email, name) => {
     try {
-      const res = await api.post('/auth/register', { name, email, phone, password });
+      const res = await api.post('/auth/send-otp', { email, name, purpose: 'register' });
+      if (res.data?.success) {
+        return res.data;
+      }
+      throw new Error(res.data?.error?.message || 'Failed to send verification code');
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Failed to send verification code';
+      throw new Error(msg);
+    }
+  };
+
+  const register = async (name, email, phone, password, otp) => {
+    try {
+      const res = await api.post('/auth/register', { name, email, phone, password, otp });
       if (res.data?.success) {
         const { user, tokens } = res.data.data;
         setUser(user);
@@ -70,7 +83,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, sendRegisterOtp, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,44 +1,83 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { X, AlertCircle, Eye, EyeOff, Lock, Mail, User, Phone, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { X, AlertCircle, CheckCircle2, Eye, EyeOff, Lock, Mail, User, Phone, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, KeyRound } from 'lucide-react';
 
 const AuthModalContext = createContext();
 
 export const AuthModalProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState('login'); // 'login' or 'signup'
+  const [signupStep, setSignupStep] = useState('details'); // 'details' or 'otp'
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  const { login, register } = useAuth();
+  const { login, register, sendRegisterOtp } = useAuth();
   const navigate = useNavigate();
+
+  // Handle countdown for OTP resend
+  useEffect(() => {
+    let timer = null;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const openAuthModal = (initialMode = 'login') => {
     setMode(initialMode);
+    setSignupStep('details');
     setError('');
+    setInfoMessage('');
+    setOtp('');
     setAgreed(false);
     setShowPassword(false);
+    setResendCooldown(0);
     setIsOpen(true);
   };
 
   const closeAuthModal = () => {
     setIsOpen(false);
     setError('');
+    setInfoMessage('');
+    setOtp('');
+    setSignupStep('details');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Step 1: Send OTP to email
+  const handleRequestOtp = async (e) => {
+    if (e) e.preventDefault();
     setError('');
+    setInfoMessage('');
 
-    if (mode === 'signup' && !agreed) {
+    if (!name.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
+
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (!agreed) {
       setError('Please agree to the Terms of Service & Privacy Policy');
       return;
     }
@@ -46,15 +85,76 @@ export const AuthModalProvider = ({ children }) => {
     setLoading(true);
 
     try {
-      if (mode === 'login') {
+      const res = await sendRegisterOtp(email.trim(), name.trim());
+      setSignupStep('otp');
+      setResendCooldown(60);
+      setInfoMessage(res?.message || `A 6-digit verification code was sent to ${email.trim()}`);
+    } catch (err) {
+      setError(err.message || 'Failed to send verification code. Please check your email and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resend OTP
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    setError('');
+    setInfoMessage('');
+    setLoading(true);
+
+    try {
+      const res = await sendRegisterOtp(email.trim(), name.trim());
+      setResendCooldown(60);
+      setInfoMessage(res?.message || 'New verification code sent! Check your inbox or spam folder.');
+    } catch (err) {
+      setError(err.message || 'Failed to resend verification code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Verify OTP & Complete Registration OR Login
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setInfoMessage('');
+
+    if (mode === 'login') {
+      setLoading(true);
+      try {
         await login(email, password);
-      } else {
-        await register(name, email, phone, password);
+        closeAuthModal();
+        navigate('/student/dashboard');
+      } catch (err) {
+        setError(err.message || 'Login failed');
+      } finally {
+        setLoading(false);
       }
+      return;
+    }
+
+    // Signup Step 1: user pressed enter or button on details form
+    if (signupStep === 'details') {
+      await handleRequestOtp(e);
+      return;
+    }
+
+    // Signup Step 2: verify OTP
+    const cleanOtp = otp.trim();
+    if (!cleanOtp || cleanOtp.length !== 6) {
+      setError('Please enter the 6-digit verification code sent to your email');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await register(name.trim(), email.trim(), phone.trim(), password, cleanOtp);
       closeAuthModal();
       navigate('/student/dashboard');
     } catch (err) {
-      setError(err.message || 'Authentication failed');
+      setError(err.message || 'Verification failed. Please check the code and try again.');
     } finally {
       setLoading(false);
     }
@@ -87,11 +187,17 @@ export const AuthModalProvider = ({ children }) => {
                     <span>Mainframe & Data</span>
                   </span>
                   <h2 className="text-2xl font-bold font-space text-white leading-tight">
-                    {mode === 'login' ? 'Welcome Back!' : 'Start Your Journey'}
+                    {mode === 'login'
+                      ? 'Welcome Back!'
+                      : signupStep === 'otp'
+                      ? 'Email Verification'
+                      : 'Start Your Journey'}
                   </h2>
                   <p className="text-xs text-slate-300 leading-relaxed">
                     {mode === 'login' 
                       ? 'Log in to continue your enterprise Mainframe and high-scale system engineering labs.'
+                      : signupStep === 'otp'
+                      ? 'We ensure high security by verifying your email address before activating your student dashboard.'
                       : 'Join 600+ engineers mentored directly by IBM & Societe Generale tech veterans.'}
                   </p>
                 </div>
@@ -118,119 +224,255 @@ export const AuthModalProvider = ({ children }) => {
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white font-space">
-                    {mode === 'login' ? 'Sign in to Account' : 'Create Free Account'}
+                    {mode === 'login' 
+                      ? 'Sign in to Account' 
+                      : signupStep === 'otp' 
+                      ? 'Verify Email Address' 
+                      : 'Create Free Account'}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {mode === 'login' ? 'Enter your registered student credentials' : 'Fill details below to get instant access'}
+                    {mode === 'login' 
+                      ? 'Enter your registered student credentials' 
+                      : signupStep === 'otp'
+                      ? `Enter the 6-digit code sent to ${email}`
+                      : 'Fill details below to get instant access'}
                   </p>
                 </div>
 
                 {error && (
                   <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs flex items-center gap-2.5 animate-in fade-in duration-150">
                     <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-                    <span className="font-semibold">{error}</span>
+                    <span className="font-semibold leading-relaxed">{error}</span>
+                  </div>
+                )}
+
+                {infoMessage && (
+                  <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2.5 animate-in fade-in duration-150">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="font-medium leading-relaxed">{infoMessage}</span>
                   </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-3.5">
-                  {mode === 'signup' && (
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Full Name</label>
-                      <div className="relative">
-                        <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                        <input
-                          type="text"
-                          required
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          placeholder="Ananya Roy"
-                          className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
-                        />
+                  {/* SIGNUP STEP 1: Personal Details */}
+                  {mode === 'signup' && signupStep === 'details' && (
+                    <>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Full Name *</label>
+                        <div className="relative">
+                          <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                          <input
+                            type="text"
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Ananya Roy"
+                            className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Email Address</label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="student@example.com"
-                        className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {mode === 'signup' && (
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">WhatsApp Number (Optional)</label>
-                      <div className="relative">
-                        <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="+91 98765 43210"
-                          className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
-                        />
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Email Address *</label>
+                        <div className="relative">
+                          <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                          <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="student@example.com"
+                            className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Password</label>
-                    <div className="relative">
-                      <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
-                      />
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">WhatsApp Number (Optional)</label>
+                        <div className="relative">
+                          <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                          <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="+91 98765 43210"
+                            className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Password *</label>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Minimum 6 characters"
+                            className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-pointer"
+                            title={showPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Terms and Conditions Checkbox */}
+                      <div className="flex items-start gap-2 pt-1">
+                        <input
+                          type="checkbox"
+                          id="modal-agreed"
+                          checked={agreed}
+                          onChange={(e) => setAgreed(e.target.checked)}
+                          className="mt-0.5 rounded border-slate-300 text-[#1153aa] focus:ring-[#2daee8] cursor-pointer"
+                        />
+                        <label htmlFor="modal-agreed" className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug cursor-pointer select-none">
+                          I agree to the <Link to="/terms" onClick={closeAuthModal} className="text-[#2daee8] font-bold hover:underline">Terms</Link>, <Link to="/privacy-policy" onClick={closeAuthModal} className="text-[#2daee8] font-bold hover:underline">Privacy</Link> & <Link to="/refund-policy" onClick={closeAuthModal} className="text-[#2daee8] font-bold hover:underline">Refund Policy</Link>.
+                        </label>
+                      </div>
+
                       <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-pointer"
-                        title={showPassword ? 'Hide password' : 'Show password'}
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-brand-gradient hover:opacity-95 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-brand-glow disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        <span>{loading ? 'Sending Verification Code...' : 'Continue to Verify Email'}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* SIGNUP STEP 2: OTP Verification Input */}
+                  {mode === 'signup' && signupStep === 'otp' && (
+                    <div className="space-y-4 pt-1">
+                      <div className="p-3.5 bg-blue-50/80 dark:bg-[#101f3c]/60 border border-blue-200 dark:border-[#1e3a6a] rounded-2xl flex items-center justify-between text-xs">
+                        <div className="truncate mr-2">
+                          <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Sending OTP To</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{email}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setSignupStep('details'); setError(''); setInfoMessage(''); }}
+                          className="text-[#2daee8] hover:text-[#1153aa] text-xs font-bold underline cursor-pointer shrink-0 flex items-center gap-1"
+                        >
+                          <ArrowLeft className="w-3 h-3" />
+                          <span>Change</span>
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="block text-center text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                          Enter 6-Digit Verification Code
+                        </label>
+                        <div className="relative max-w-[280px] mx-auto">
+                          <KeyRound className="w-5 h-5 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            maxLength={6}
+                            required
+                            autoFocus
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            placeholder="123456"
+                            className="w-full bg-slate-50 dark:bg-[#101f3c] border-2 border-slate-300 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-2xl pl-10 pr-4 py-2.5 text-center font-mono text-xl font-bold tracking-[0.4em] text-slate-900 dark:text-white focus:outline-none transition-all shadow-inner"
+                          />
+                        </div>
+                        <p className="text-[11px] text-center text-slate-500 dark:text-slate-400 mt-2">
+                          Valid for 10 minutes. Check your spam folder if not received.
+                        </p>
+                      </div>
+
+                      <div className="text-center pt-1">
+                        {resendCooldown > 0 ? (
+                          <span className="text-xs text-slate-400 font-medium">
+                            Resend code in <strong className="text-slate-600 dark:text-slate-300">{resendCooldown}s</strong>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleResendOtp}
+                            disabled={loading}
+                            className="text-xs text-[#2daee8] hover:text-[#1153aa] dark:hover:text-sky-300 font-bold underline cursor-pointer disabled:opacity-50"
+                          >
+                            Didn't receive code? Resend Code
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading || otp.length !== 6}
+                        className="w-full bg-brand-gradient hover:opacity-95 text-white font-bold py-3.5 px-4 rounded-xl text-xs transition-all shadow-brand-glow disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>{loading ? 'Verifying & Registering...' : 'Verify Email & Create Account'}</span>
                       </button>
                     </div>
-                  </div>
-
-                  {/* Terms and Conditions Checkbox */}
-                  {mode === 'signup' && (
-                    <div className="flex items-start gap-2 pt-1">
-                      <input
-                        type="checkbox"
-                        id="modal-agreed"
-                        checked={agreed}
-                        onChange={(e) => setAgreed(e.target.checked)}
-                        className="mt-0.5 rounded border-slate-300 text-[#1153aa] focus:ring-[#2daee8] cursor-pointer"
-                      />
-                      <label htmlFor="modal-agreed" className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug cursor-pointer select-none">
-                        I agree to the <Link to="/terms" onClick={closeAuthModal} className="text-[#2daee8] font-bold hover:underline">Terms</Link>, <Link to="/privacy-policy" onClick={closeAuthModal} className="text-[#2daee8] font-bold hover:underline">Privacy</Link> & <Link to="/refund-policy" onClick={closeAuthModal} className="text-[#2daee8] font-bold hover:underline">Refund Policy</Link>.
-                      </label>
-                    </div>
                   )}
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-brand-gradient hover:opacity-95 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-brand-glow disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
-                  >
-                    <span>{loading ? 'Processing...' : mode === 'login' ? 'Sign In to Portal' : 'Create Student Account'}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                  {/* LOGIN FORM */}
+                  {mode === 'login' && (
+                    <>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Email Address</label>
+                        <div className="relative">
+                          <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                          <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="student@example.com"
+                            className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Password</label>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full bg-slate-50 dark:bg-[#101f3c] border border-slate-200 dark:border-[#1e3a6a] focus:bg-white dark:focus:bg-[#14264b] focus:border-[#2daee8] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-900 dark:text-white font-medium focus:outline-none transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 cursor-pointer"
+                            title={showPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-brand-gradient hover:opacity-95 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-brand-glow disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
+                      >
+                        <span>{loading ? 'Signing in...' : 'Sign In to Portal'}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                 </form>
               </div>
 
@@ -239,14 +481,14 @@ export const AuthModalProvider = ({ children }) => {
                 {mode === 'login' ? (
                   <span>
                     Don't have an account?{' '}
-                    <button onClick={() => { setMode('signup'); setError(''); }} className="text-[#2daee8] font-bold hover:underline cursor-pointer">
+                    <button onClick={() => { setMode('signup'); setSignupStep('details'); setError(''); setInfoMessage(''); }} className="text-[#2daee8] font-bold hover:underline cursor-pointer">
                       Sign up for free
                     </button>
                   </span>
                 ) : (
                   <span>
                     Already registered?{' '}
-                    <button onClick={() => { setMode('login'); setError(''); }} className="text-[#2daee8] font-bold hover:underline cursor-pointer">
+                    <button onClick={() => { setMode('login'); setError(''); setInfoMessage(''); }} className="text-[#2daee8] font-bold hover:underline cursor-pointer">
                       Sign in here
                     </button>
                   </span>
@@ -263,3 +505,4 @@ export const AuthModalProvider = ({ children }) => {
 };
 
 export const useAuthModal = () => useContext(AuthModalContext);
+
