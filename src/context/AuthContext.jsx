@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { signInWithGooglePopup } from '../config/firebase';
 
 const AuthContext = createContext();
 
@@ -46,6 +47,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const googleUser = await signInWithGooglePopup();
+      const res = await api.post('/auth/google', googleUser);
+      if (res.data?.success) {
+        const { user, tokens } = res.data.data;
+        setUser(user);
+        localStorage.setItem('nexxskill_token', tokens.access_token);
+        localStorage.setItem('nexxskill_user', JSON.stringify(user));
+        return user;
+      }
+      throw new Error(res.data?.error?.message || 'Google authentication failed');
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Google sign-in failed';
+      throw new Error(msg);
+    }
+  };
+
   const sendRegisterOtp = async (email, name) => {
     try {
       const res = await api.post('/auth/send-otp', { email, name, purpose: 'register' });
@@ -83,10 +102,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, sendRegisterOtp, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, sendRegisterOtp, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
+
