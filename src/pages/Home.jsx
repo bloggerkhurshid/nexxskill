@@ -228,76 +228,40 @@ export const Home = () => {
         return;
       }
 
-      const { orderId, paymentSessionId, environment, isDemo } = orderRes.data.data;
+      const { orderId, paymentSessionId, environment } = orderRes.data.data;
 
-      // Real Cashfree Modal Checkout
-      if (window.Cashfree && paymentSessionId && !isDemo && !paymentSessionId.includes('demo')) {
-        const cashfree = window.Cashfree({
-          mode: environment === 'production' ? 'production' : 'sandbox'
-        });
+      if (!paymentSessionId) {
+        throw new Error('Cashfree payment session could not be created. Please configure Cashfree credentials.');
+      }
 
-        cashfree.checkout({
-          paymentSessionId: paymentSessionId,
-          redirectTarget: "_modal"
-        }).then(async (result) => {
-          document.body.style.overflow = '';
-          setPurchasingCourseId(null);
+      if (!window.Cashfree) {
+        throw new Error('Cashfree Payment Gateway SDK could not be loaded. Please refresh and try again.');
+      }
 
-          if (result.error) {
-            setNoticeModal({
-              type: 'info',
-              title: 'Payment Incomplete',
-              message: result.error.message || 'Payment window closed or cancelled.'
-            });
-            return;
-          }
+      const cashfree = window.Cashfree({
+        mode: environment === 'production' ? 'production' : 'sandbox'
+      });
 
-          // Verify with server
-          try {
-            const verifyPayId = `cf_pay_${Date.now()}`;
-            const verifyRes = await api.post('/payments/verify', {
-              order_id: orderId,
-              orderId: orderId,
-              cf_payment_id: verifyPayId,
-              payment_id: verifyPayId,
-              razorpay_order_id: orderId,
-              razorpay_payment_id: verifyPayId
-            });
+      cashfree.checkout({
+        paymentSessionId: paymentSessionId,
+        redirectTarget: "_modal"
+      }).then(async (result) => {
+        document.body.style.overflow = '';
+        setPurchasingCourseId(null);
 
-            if (verifyRes.data?.success) {
-              setCheckoutCourse(null);
-              setNoticeModal({
-                type: 'success',
-                title: 'Payment Successful',
-                message: 'Enrollment successful! Your course access has been activated.',
-                onClose: () => navigate('/student/dashboard')
-              });
-            } else {
-              setNoticeModal({
-                type: 'error',
-                title: 'Payment Verification',
-                message: verifyRes.data?.error?.message || 'Payment verification failed. Please contact support.'
-              });
-            }
-          } catch (vErr) {
-            setNoticeModal({
-              type: 'error',
-              title: 'Payment Verification Error',
-              message: vErr.response?.data?.error?.message || 'Payment verification failed.'
-            });
-          }
-        });
-      } else {
-        // Demo / Direct Verification Mode
+        if (result.error) {
+          setNoticeModal({
+            type: 'info',
+            title: 'Payment Cancelled',
+            message: result.error.message || 'Payment window was closed before completing payment.'
+          });
+          return;
+        }
+
+        // Only verify after Cashfree reports payment completion
         try {
-          const simPayId = `cf_demo_${Date.now()}`;
           const verifyRes = await api.post('/payments/verify', {
-            order_id: orderId,
-            orderId: orderId,
-            cf_payment_id: simPayId,
-            payment_id: simPayId,
-            razorpay_order_id: orderId,
-            razorpay_payment_id: simPayId
+            order_id: orderId
           });
 
           if (verifyRes.data?.success) {
@@ -305,20 +269,24 @@ export const Home = () => {
             setNoticeModal({
               type: 'success',
               title: 'Payment Successful',
-              message: 'Course enrollment confirmed! Access activated on your dashboard.',
+              message: 'Payment verified! Your course access has been activated.',
               onClose: () => navigate('/student/dashboard')
             });
           } else {
-            throw new Error(verifyRes.data?.error?.message || 'Verification failed');
+            setNoticeModal({
+              type: 'error',
+              title: 'Payment Incomplete',
+              message: verifyRes.data?.error?.message || 'Payment was not confirmed by gateway.'
+            });
           }
         } catch (vErr) {
           setNoticeModal({
             type: 'error',
             title: 'Payment Verification Error',
-            message: vErr.response?.data?.error?.message || 'Payment verification error.'
+            message: vErr.response?.data?.error?.message || 'Payment verification failed.'
           });
         }
-      }
+      });
     } catch (err) {
       document.body.style.overflow = '';
       setNoticeModal({
