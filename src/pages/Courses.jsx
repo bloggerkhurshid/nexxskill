@@ -200,8 +200,14 @@ export const Courses = () => {
 
           // Verify payment with server
           try {
+            const verifyPayId = `cf_pay_${Date.now()}`;
             const verifyRes = await api.post('/payments/verify', {
-              order_id: orderId
+              order_id: orderId,
+              orderId: orderId,
+              cf_payment_id: verifyPayId,
+              payment_id: verifyPayId,
+              razorpay_order_id: orderId,
+              razorpay_payment_id: verifyPayId
             });
 
             if (verifyRes.data?.success) {
@@ -228,11 +234,16 @@ export const Courses = () => {
           }
         });
       } else {
-        // Demo / Simulation Mode
+        // Demo / Direct Verification Mode
         try {
+          const simPayId = `cf_demo_${Date.now()}`;
           const verifyRes = await api.post('/payments/verify', {
             order_id: orderId,
-            payment_id: `cf_demo_${Date.now()}`
+            orderId: orderId,
+            cf_payment_id: simPayId,
+            payment_id: simPayId,
+            razorpay_order_id: orderId,
+            razorpay_payment_id: simPayId
           });
 
           if (verifyRes.data?.success) {
@@ -244,7 +255,7 @@ export const Courses = () => {
               onClose: () => navigate('/student/dashboard')
             });
           } else {
-            throw new Error('Verification failed');
+            throw new Error(verifyRes.data?.error?.message || 'Verification failed');
           }
         } catch (vErr) {
           setNoticeModal({
